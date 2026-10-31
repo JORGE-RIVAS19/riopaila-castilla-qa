@@ -66,6 +66,42 @@ flowchart LR
 | Chunking | `RecursiveCharacterTextSplitter` 1 200 chars / 150 de solape, cortando primero por `##` | Fragmentos autocontenidos listos para embeddings |
 | Módulo 2 | `nomic-embed-text-v2-moe` (Ollama) + **ChromaDB** | Embeddings abiertos sin costo de API sobre `chunks.jsonl` |
 
+## 🔄 Data Processing Workflow
+
+The knowledge base is generated through a reproducible five-stage pipeline that transforms raw website content into structured documents ready for language model consumption.
+
+### Pipeline Stages
+
+| Stage | Component | Description | Output |
+|---|---|---|---|
+| 1. Discovery | `discovery.py` | Reads `robots.txt` and the WordPress sitemap to identify accessible URLs. | `discovery.json` |
+| 2. Extraction | `fetcher.py`, `bronze.py` | Downloads HTML content while respecting rate limits, timeouts, and website restrictions. | `data/raw/` |
+| 3. Cleaning | `silver.py` | Extracts relevant content and converts HTML into Markdown using Trafilatura and BeautifulSoup. | `data/processed/` |
+| 4. Deduplication | `dedup.py` | Removes exact duplicates, repeated website elements, short documents, and near-duplicates. | Clean document collection |
+| 5. Enrichment | `gold.py`, `chunking.py` | Generates metadata, structured documents, and overlapping text chunks. | `data/gold/` |
+
+### Data Quality and Traceability
+
+Each Gold document includes metadata such as:
+
+- Source URL and document title.
+- Content classification and document type.
+- Capture date and publication date, when available.
+- SHA-256 hash for content identification.
+- Token count for context management.
+
+The pipeline generates 691 chunks using a chunk size of 1,200 characters and an overlap of 150 characters.
+
+### Reproducibility
+
+The pipeline supports offline processing through:
+
+`uv run python scripts/scrape_empresa.py --offline`
+
+This allows Silver and Gold layers to be regenerated from previously captured Bronze data without making additional requests to the company website.
+
+This separation between extraction and transformation improves reproducibility, reduces unnecessary requests, and preserves the original source data for future processing.
+
 ## ⚙️ Instalación
 
 Requisitos: [uv](https://docs.astral.sh/uv/) · [Ollama](https://ollama.com) · Git. (uv descarga Python 3.13 solo.)
