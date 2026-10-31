@@ -44,7 +44,7 @@ SECTION_RULES: list[tuple[str, tuple[str, ...]]] = [
             "reconocimientos",
         ),
     ),
-    ("procesos-productivos", ("cana", "ganaderia", "palma-4")),
+    ("procesos-productivos", ("/cana/", "ganaderia", "palma-4")),
     (
         "negocios-y-productos",
         (

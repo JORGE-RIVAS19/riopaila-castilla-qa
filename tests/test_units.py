@@ -31,6 +31,9 @@ def test_classify_section_follows_site_menu():
     assert classify_section(f"{base}/agricultura-regenerativa/", False) == "sostenibilidad"
     assert classify_section(f"{base}/una-noticia/", True) == "noticias"
     assert classify_section(f"{base}/", False) == "inicio"
+    assert classify_section(f"{base}/cana/", False) == "procesos-productivos"
+    # "cana" dentro de otra palabra no debe arrastrar la página a procesos productivos
+    assert classify_section(f"{base}/region-colombiana-cultura/", False) == "institucional"
 
 
 def test_html_to_markdown_drops_scripts_and_menus():
