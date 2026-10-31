@@ -5,8 +5,8 @@ para qué y cómo se verificó el resultado. La autoría y la defensa técnica d
 
 | Herramienta | Para qué | Cómo se verificó |
 |---|---|---|
-| Claude (Anthropic), asistente de código | Andamiaje inicial del pipeline, la app de Streamlit, las pruebas y borradores de la documentación | Revisión línea a línea por el equipo, 22 pruebas automáticas (pytest) con un sitio WordPress simulado y un LLM falso, Ruff, y ejecución real del pipeline y la app contra el sitio de la empresa |
-| Llama 3.2 3B (Ollama) | Motor del sistema Q&A, Resumen y FAQ | Batería de 24 preguntas con métricas automáticas y calificación manual |
+| Claude (Anthropic), asistente de código | Andamiaje inicial del pipeline, la app de Streamlit, las pruebas y borradores de la documentación | Revisión línea a línea por el equipo, 24 pruebas automáticas (pytest) con un sitio WordPress simulado y un LLM falso, Ruff, y ejecución real del pipeline y la app contra el sitio de la empresa |
+| Gemini 3.6 Flash (API) y Llama 3.2 3B (Ollama) | Motor del sistema Q&A, Resumen y FAQ | Batería de 24 preguntas con métricas automáticas, tres corridas de la versión final y revisión manual de ejemplos |
 
 Reglas que seguimos:
 - Ningún paquete sugerido por IA se instaló sin verificarlo en PyPI (riesgo de *slopsquatting*); todas las
