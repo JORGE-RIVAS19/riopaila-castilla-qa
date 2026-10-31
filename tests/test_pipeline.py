@@ -62,3 +62,17 @@ def test_live_demo_with_small_budget_keeps_full_corpus(test_settings):
     # Solo una petición de página nueva (más robots y sitemaps); el corpus sigue completo.
     assert manifest["extraer"]["desde_cache"] == 4
     assert manifest["enriquecer"]["documentos"] == 3
+
+
+def test_offline_network_does_not_wipe_corpus(test_settings):
+    import dataclasses
+
+    import pytest
+
+    run_pipeline(test_settings)
+    before = test_settings.paths.corpus.read_text()
+    dead = dataclasses.replace(test_settings.scraper, base_url="http://127.0.0.1:9", timeout_s=0.5)
+    broken = dataclasses.replace(test_settings, scraper=dead)
+    with pytest.raises(RuntimeError):
+        run_pipeline(broken)
+    assert test_settings.paths.corpus.read_text() == before

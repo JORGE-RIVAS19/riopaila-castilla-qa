@@ -46,7 +46,7 @@ def main() -> int:
         manifest = run_pipeline(
             settings, max_pages=args.max_pages, offline=args.offline, refresh=args.refresh, on_event=_printer
         )
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, RuntimeError) as exc:
         print(f"❌ {exc}")
         return 1
     gold = manifest["enriquecer"]

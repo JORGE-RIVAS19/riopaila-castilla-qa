@@ -87,6 +87,11 @@ def run_pipeline(
         report = _load_discovery(settings)
     else:
         report = discover(fetcher, settings.scraper)
+        if not report.urls:
+            raise RuntimeError(
+                "No se descubrió ninguna URL (¿sin conexión o sitio caído?). "
+                "El corpus existente no se modificó; prueba con --offline."
+            )
         _save_discovery(report, settings)
     urls = report.urls
     manifest["descubrir"] = {
@@ -132,6 +137,8 @@ def run_pipeline(
         "bytes_html": raw_bytes,
         "tokens_html_crudo_aprox": raw_bytes // 4,
     }
+    if not html_caps:
+        raise RuntimeError("Ninguna página se descargó con éxito. El corpus existente no se modificó.")
     emit("extraer", "done", f"{len(html_caps)} páginas HTML en Bronze", manifest["extraer"])
 
     # 3 · Limpiar (Silver) ------------------------------------------------
