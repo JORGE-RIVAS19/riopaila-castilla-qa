@@ -24,9 +24,11 @@ def main() -> int:
     parser.add_argument("--model", default=None)
     parser.add_argument("--mode", default="auto", choices=["auto", "completo", "bm25"])
     parser.add_argument("--limit", type=int, default=None, help="solo las primeras N preguntas")
+    parser.add_argument("--pause", type=float, default=None, help="segundos entre preguntas (API: 6 por defecto)")
     args = parser.parse_args()
 
     settings = get_settings()
+    provider = args.provider or settings.llm.provider
     store = CorpusStore(settings.paths)
     if not store.available:
         print("❌ No hay corpus Gold. Ejecuta primero: uv run python scripts/scrape_empresa.py")
@@ -35,6 +37,8 @@ def main() -> int:
     def progress(i: int, n: int, row: dict) -> None:
         mark = "✅" if row.get("exito_auto") else "❌"
         print(f"{mark} {i:>2}/{n} [{row['id']}] {row['pregunta'][:70]} · {row.get('latencia_s', 0)} s")
+        if str(row.get("respuesta", "")).startswith("ERROR"):
+            print(f"      ↳ {row['respuesta'][:160]}")
 
     rows, summary, out = run_evaluation(
         store,
@@ -46,6 +50,8 @@ def main() -> int:
         args.mode,
         limit=args.limit,
         on_progress=progress,
+        pause_s=args.pause if args.pause is not None else (0.0 if provider == "ollama" else 6.0),
+        on_wait=lambda msg: print(f"      ⏳ {msg}"),
     )
     md = settings.paths.root / "docs" / "evaluacion" / f"{out.stem}.md"
     md.parent.mkdir(parents=True, exist_ok=True)

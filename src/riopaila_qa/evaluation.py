@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import statistics
+import time
 import unicodedata
 from collections.abc import Callable
 from datetime import datetime
@@ -100,6 +101,35 @@ def summarize_rows(rows: list[dict]) -> dict:
     }
 
 
+TRANSIENT_MARKERS = ("429", "503", "RESOURCE_EXHAUSTED", "UNAVAILABLE", "quota", "rate limit", "high demand")
+RETRY_WAITS_S = (20, 45, 90)
+
+
+def is_transient(error: Exception) -> bool:
+    """True si el error es de saturación o de límite por minuto (vale la pena reintentar).
+
+    La cuota DIARIA agotada no es transitoria: reintentar solo gasta tiempo.
+    """
+    text = str(error).lower()
+    if "per day" in text or "perday" in text or "cuota diaria" in text:
+        return False
+    return any(marker.lower() in text for marker in TRANSIENT_MARKERS)
+
+
+def _answer_with_retry(store, question, settings, provider, model, prompt_id, mode, budget, on_wait=None):
+    """Llama al Q&A y reintenta con espera creciente ante 429/503 de la API."""
+    for attempt, wait in enumerate((*RETRY_WAITS_S, None)):
+        try:
+            return answer_question(store, question, settings, provider, model, prompt_id, mode, budget)
+        except RuntimeError as exc:
+            if wait is None or not is_transient(exc):
+                raise
+            if on_wait:
+                on_wait(f"API saturada o sin cuota (intento {attempt + 1}); espero {wait} s · {str(exc)[:90]}")
+            time.sleep(wait)
+    raise RuntimeError("sin respuesta")  # inalcanzable
+
+
 def run_evaluation(
     store: CorpusStore,
     paths: Paths,
@@ -111,13 +141,19 @@ def run_evaluation(
     budget_tokens: int | None = None,
     limit: int | None = None,
     on_progress: Callable[[int, int, dict], None] | None = None,
+    pause_s: float = 0.0,
+    on_wait: Callable[[str], None] | None = None,
 ) -> tuple[list[dict], dict, Path]:
     """Corre la batería, guarda un JSONL con cada respuesta y devuelve el resumen."""
     questions = load_questions(paths)[:limit] if limit else load_questions(paths)
     rows: list[dict] = []
     for i, q in enumerate(questions, start=1):
+        if i > 1 and pause_s:
+            time.sleep(pause_s)  # cortesía con los límites por minuto de la API gratuita
         try:
-            res = answer_question(store, q["pregunta"], settings, provider, model, prompt_id, mode, budget_tokens)
+            res = _answer_with_retry(
+                store, q["pregunta"], settings, provider, model, prompt_id, mode, budget_tokens, on_wait
+            )
             row = score(q, res)
         except RuntimeError as exc:
             row = {

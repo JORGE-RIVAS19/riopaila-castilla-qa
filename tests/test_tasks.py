@@ -125,3 +125,24 @@ def test_pinned_institutional_chunks_always_enter(store):
     ctx = store.bm25_context("pregunta sin relacion alguna xyz", budget_tokens=5000)
     assert "somos-riopaila-castilla" in PINNED_URL_KEYS[0]
     assert ctx.pieces[0].url == pinned_url
+
+
+def test_eval_retries_transient_api_errors(store, test_settings, monkeypatch):
+    import riopaila_qa.evaluation as ev
+
+    calls = {"n": 0}
+    real = ev.answer_question
+
+    def flaky(*args, **kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("GoogleAPIError: 429 RESOURCE_EXHAUSTED")
+        return real(*args, **kwargs, llm=FakeListChatModel(responses=["Fundada en 1900 [1].\nFuentes: [1]"]))
+
+    monkeypatch.setattr(ev, "answer_question", flaky)
+    monkeypatch.setattr(ev, "RETRY_WAITS_S", (0, 0, 0))
+    res = ev._answer_with_retry(store, "¿Año?", test_settings.llm, None, None, "qa_v3_xml_sandwich", "auto", None)
+    assert calls["n"] == 2 and res.citations
+    assert ev.is_transient(RuntimeError("503 UNAVAILABLE high demand"))
+    assert not ev.is_transient(RuntimeError("API key not valid"))
+    assert not ev.is_transient(RuntimeError("429 Generate content requests per day limit exceeded"))

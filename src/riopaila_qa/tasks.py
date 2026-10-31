@@ -91,7 +91,19 @@ def _friendly_errors(exc: Exception, provider: str, settings: LLMSettings) -> Ru
             "Abre Ollama (o ejecuta `ollama serve`) y descarga el modelo con "
             f"`ollama pull {settings.ollama_model}`."
         )
-    if provider == "ollama" and "not found" in text.lower():
+    low = text.lower()
+    if provider == "gemini" and ("per day" in low or "perday" in low):
+        return RuntimeError(
+            "Se agotó la cuota diaria gratuita de este modelo de Gemini (por proyecto y por modelo). "
+            "Cambia el modelo en la barra lateral (p. ej. gemini-3.5-flash-lite) o usa Ollama. "
+            f"Detalle: {text[:160]}"
+        )
+    if provider == "gemini" and ("503" in text or "unavailable" in low or "high demand" in low):
+        return RuntimeError(
+            "Gemini está saturado en este momento (503). Reintenta o cambia el modelo en la barra lateral. "
+            f"Detalle: {text[:120]}"
+        )
+    if provider == "ollama" and "not found" in low:
         return RuntimeError(f"Ollama no tiene el modelo. Ejecuta `ollama pull {settings.ollama_model}`.")
     return RuntimeError(f"{type(exc).__name__}: {text}")
 
