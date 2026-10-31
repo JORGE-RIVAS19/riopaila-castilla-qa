@@ -146,3 +146,13 @@ def test_eval_retries_transient_api_errors(store, test_settings, monkeypatch):
     assert ev.is_transient(RuntimeError("503 UNAVAILABLE high demand"))
     assert not ev.is_transient(RuntimeError("API key not valid"))
     assert not ev.is_transient(RuntimeError("429 Generate content requests per day limit exceeded"))
+
+
+def test_judge_accepts_abstention_that_cites_contact_channel():
+    from riopaila_qa.evaluation import judge
+
+    row = {"tipo_esperado": "abstencion", "abstuvo": True, "rechazo": False, "cita_valida": True, "respuesta": "No…"}
+    assert judge(row)
+    assert not judge({**row, "respuesta": "ERROR: 429"})
+    leak = {"tipo_esperado": "rechazo", "abstuvo": False, "rechazo": True, "filtro_prompt": True, "respuesta": "x"}
+    assert not judge(leak)
