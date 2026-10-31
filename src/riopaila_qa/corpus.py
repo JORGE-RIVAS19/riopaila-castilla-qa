@@ -140,11 +140,20 @@ STOPWORDS = set(
 )
 
 
+STEM_LEN = 5  # truncamiento: "fundada"/"fundación" → "funda", "productos"/"producto" → "produ"
+
+# Páginas institucionales que siempre entran al contexto (identidad y contacto):
+# responden las preguntas de primer contacto aunque la búsqueda léxica no las encuentre.
+PINNED_URL_KEYS = ("somos-riopaila-castilla", "/contactanos/")
+PINNED_MAX_TOKENS = 1500
+NEWS_WEIGHT = 0.85  # hay 3 noticias por cada página: se prioriza levemente lo institucional
+
+
 def tokenize(text: str) -> list[str]:
-    """Tokenización léxica: minúsculas, sin tildes, sin palabras vacías."""
+    """Tokenización léxica: minúsculas, sin tildes, sin palabras vacías y con stemming por truncamiento."""
     text = unicodedata.normalize("NFKD", text.lower())
     text = "".join(c for c in text if not unicodedata.combining(c))
-    return [t for t in re.findall(r"[a-z0-9]+", text) if t not in STOPWORDS and len(t) > 1]
+    return [t[:STEM_LEN] for t in re.findall(r"[a-z0-9]+", text) if t not in STOPWORDS and len(t) > 1]
 
 
 class BM25:
@@ -286,31 +295,50 @@ class CorpusStore:
             notes.append(f"{omitted} documentos no cupieron en el presupuesto de {budget_tokens:,} tokens.")
         return BuiltContext(render_pieces(pieces), pieces, "completo", used, omitted, notes)
 
+    def pinned_chunks(self) -> list[Chunk]:
+        """Fragmentos institucionales fijos (identidad y contacto), hasta ``PINNED_MAX_TOKENS``."""
+        pinned, used = [], 0
+        for chunk in self.chunks:
+            if any(key in chunk.url for key in PINNED_URL_KEYS) and used + chunk.tokens <= PINNED_MAX_TOKENS:
+                pinned.append(chunk)
+                used += chunk.tokens
+        return pinned
+
     def bm25_context(
-        self, query: str, budget_tokens: int, top_k: int = 12, sections: list[str] | None = None
+        self, query: str, budget_tokens: int, top_k: int = 8, sections: list[str] | None = None
     ) -> BuiltContext:
-        """Modo ``bm25``: los fragmentos más relevantes para la consulta, dentro del presupuesto."""
-        scores = self.bm25.scores(query)
+        """Modo ``bm25``: contexto institucional fijo + los fragmentos más relevantes, dentro del presupuesto."""
+        scores = [
+            sc * (NEWS_WEIGHT if c.seccion == "noticias" else 1.0)
+            for sc, c in zip(self.bm25.scores(query), self.chunks, strict=True)
+        ]
+        pinned = [] if sections else self.pinned_chunks()
+        pinned_ids = {c.chunk_id for c in pinned}
+        used = sum(c.tokens for c in pinned)
         ranked = sorted(
-            (i for i, c in enumerate(self.chunks) if not sections or c.seccion in sections),
+            (i for i, c in enumerate(self.chunks) if (not sections or c.seccion in sections)),
             key=lambda i: scores[i],
             reverse=True,
         )
-        chosen, used = [], 0
+        chosen = []
         for i in ranked:
             if len(chosen) >= top_k:
                 break
             chunk = self.chunks[i]
-            if used + chunk.tokens > budget_tokens:
+            if chunk.chunk_id in pinned_ids or used + chunk.tokens > budget_tokens:
                 continue
             chosen.append((chunk, scores[i]))
             used += chunk.tokens
-        ordered = reorder_for_long_context(chosen)
+        # Lo fijo va al inicio (primacy); lo recuperado se reordena en U.
+        ordered = [(c, None) for c in pinned] + reorder_for_long_context(chosen)
         pieces = [
-            ContextPiece(n, c.titulo, c.url, c.seccion, c.texto, c.tokens, round(s, 3))
-            for n, (c, s) in enumerate(ordered, start=1)
+            ContextPiece(n, c.titulo, c.url, c.seccion, c.texto, c.tokens, None if sc is None else round(sc, 3))
+            for n, (c, sc) in enumerate(ordered, start=1)
         ]
-        notes = [f"Preselección BM25: {len(pieces)} de {len(self.chunks)} fragmentos."]
+        notes = [
+            f"Contexto fijo: {len(pinned)} fragmentos institucionales · "
+            f"preselección BM25: {len(chosen)} de {len(self.chunks)} fragmentos."
+        ]
         return BuiltContext(render_pieces(pieces), pieces, "bm25", used, len(self.chunks) - len(pieces), notes)
 
     def build_context(

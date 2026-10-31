@@ -25,7 +25,7 @@ from riopaila_qa.textutils import count_tokens
 ABSTENTION = "No encuentro esa información en las fuentes públicas de Riopaila Castilla"
 REFUSAL = "Solo puedo ayudarte con información pública de Riopaila Castilla"
 _CITE_RE = re.compile(r"\[(\d+)\]")
-_NUM_CTX_MARGIN = 4096  # espacio para instrucciones, pregunta y respuesta
+_ANSWER_TOKENS = 1536  # espacio para la respuesta del modelo
 
 
 @dataclass
@@ -121,8 +121,20 @@ def validate_citations(text: str, context: BuiltContext) -> tuple[list[Citation]
     return unique, invalid
 
 
-def _model(settings: LLMSettings, task: str, provider: str | None, model: str | None, budget: int) -> BaseChatModel:
-    return get_chat_model(settings, provider, model, TASK_SAMPLING[task], num_ctx=budget + _NUM_CTX_MARGIN)
+def _num_ctx(prompt_tokens: int) -> int:
+    """Ventana de Ollama ajustada al prompt REAL (múltiplo de 2048).
+
+    Reservar la ventana según el presupuesto máximo (p. ej. 134k) obliga a Ollama a
+    asignar una caché KV enorme y vuelve lenta cada respuesta aunque el prompt sea corto.
+    """
+    needed = prompt_tokens + _ANSWER_TOKENS
+    return max(4096, -(-needed // 2048) * 2048)
+
+
+def _model(
+    settings: LLMSettings, task: str, provider: str | None, model: str | None, prompt_tokens: int
+) -> BaseChatModel:
+    return get_chat_model(settings, provider, model, TASK_SAMPLING[task], num_ctx=_num_ctx(prompt_tokens))
 
 
 def answer_question(
@@ -144,7 +156,7 @@ def answer_question(
     template = spec.template()
     values = {"documentos": ctx.text, "pregunta": question.strip()}
     rendered = _render(template, values)
-    chat = llm or _model(settings, "qa", provider, model, budget)
+    chat = llm or _model(settings, "qa", provider, model, count_tokens(rendered))
     start = time.monotonic()
     try:
         text = (template | chat | StrOutputParser()).invoke(values).strip()
@@ -192,7 +204,7 @@ def summarize(
     template = spec.template()
     values = {"documentos": ctx.text, "alcance": _scope_label(sections)}
     rendered = _render(template, values)
-    chat = llm or _model(settings, "resumen", provider, model, budget)
+    chat = llm or _model(settings, "resumen", provider, model, count_tokens(rendered))
     start = time.monotonic()
     try:
         text = (template | chat | StrOutputParser()).invoke(values).strip()
@@ -244,7 +256,7 @@ def generate_faq(
     template = spec.template()
     values = {"documentos": ctx.text, "alcance": _scope_label(sections), "n": n}
     rendered = _render(template, values)
-    chat = llm or _model(settings, "faq", provider, model, budget)
+    chat = llm or _model(settings, "faq", provider, model, count_tokens(rendered))
     start = time.monotonic()
     try:
         try:

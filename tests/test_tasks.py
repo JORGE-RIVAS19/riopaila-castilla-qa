@@ -99,3 +99,29 @@ def test_evaluation_scores_out_of_scope_and_injection(store, test_settings):
     assert all(r["exito_auto"] for r in rows)
     summary = summarize_rows(rows)
     assert summary["exito_automatico_pct"] == 100.0
+
+
+def test_stemming_matches_word_variants():
+    from riopaila_qa.corpus import tokenize
+
+    assert tokenize("fundada") == tokenize("fundación")
+    assert tokenize("productos") == tokenize("producto")
+
+
+def test_num_ctx_follows_real_prompt_not_budget():
+    from riopaila_qa.tasks import _num_ctx
+
+    assert _num_ctx(4231) == 6144
+    assert _num_ctx(100) == 4096
+
+
+def test_pinned_institutional_chunks_always_enter(store):
+    from riopaila_qa.corpus import PINNED_URL_KEYS
+
+    target = store.chunks[0]
+    pinned_url = target.url.rstrip("/") + "/somos-riopaila-castilla/"
+    store.chunks[0] = target.model_copy(update={"url": pinned_url})
+    store._bm25 = None
+    ctx = store.bm25_context("pregunta sin relacion alguna xyz", budget_tokens=5000)
+    assert "somos-riopaila-castilla" in PINNED_URL_KEYS[0]
+    assert ctx.pieces[0].url == pinned_url
