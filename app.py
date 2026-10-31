@@ -325,7 +325,7 @@ with tabs[1]:
                     f"documentos · {result['enriquecer']['tokens_totales']:,} tokens. Recarga la página para "
                     "actualizar las métricas."
                 )
-            except FileNotFoundError as exc:
+            except (FileNotFoundError, RuntimeError) as exc:
                 st.error(str(exc))
             except Exception as exc:  # noqa: BLE001
                 st.exception(exc)
