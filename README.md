@@ -58,12 +58,49 @@ flowchart LR
 
 | Decisión | Elección | Por qué |
 |---|---|---|
-| LLM (Módulo 1) | **Llama 3.2 3B en Ollama** (por defecto) · Gemini/OpenAI opcional | Datos de la empresa sin salir del equipo y costo cero; la API sirve para contexto largo |
+| LLM (Módulo 1) | **Gemini 3.6 Flash** por API para la demo y la evaluación · **Llama 3.2 3B en Ollama** como opción local | En la prueba real, el modelo local tardó 80–125 s por respuesta en CPU y no siguió las reglas; Gemini responde en 3–10 s. Se cambia desde `.env` o la barra lateral |
 | Framework | **LangChain (LCEL)** | Plantillas `ChatPromptTemplate`, `with_structured_output` y cambio de proveedor sin tocar el código |
-| Muestreo | **T = 0.0 · top_p = 0.1** (Q&A, FAQ) · T = 0.3 · top_p = 0.9 (resumen) | Régimen Q1 para hechos y JSON; Q2 para resúmenes (Clase 4) |
+| Muestreo | **T = 0.0 · top_p = 0.1** (Q&A, FAQ) · T = 0.3 · top_p = 0.9 (resumen) | Régimen Q1 para hechos y JSON; Q2 para resúmenes (Clase 4). Gemini 3.x usa muestreo fijo |
+| Resultado | **95,8 %** de éxito en 24 preguntas (v3), 100 % de citas válidas, abstención y rechazo de inyección | Ver `docs/INFORME.md` y `prompts/README.md` |
 | Contexto | **Corpus completo** si cabe; si no, **BM25** + reordenamiento en U | *Lost in the Middle* (Liu et al., 2023) y límite de `num_ctx` del modelo local |
 | Chunking | `RecursiveCharacterTextSplitter` 1 200 chars / 150 de solape, cortando primero por `##` | Fragmentos autocontenidos listos para embeddings |
 | Módulo 2 | `nomic-embed-text-v2-moe` (Ollama) + **ChromaDB** | Embeddings abiertos sin costo de API sobre `chunks.jsonl` |
+
+## 🔄 Data Processing Workflow
+
+The knowledge base is generated through a reproducible five-stage pipeline that transforms raw website content into structured documents ready for language model consumption.
+
+### Pipeline Stages
+
+| Stage | Component | Description | Output |
+|---|---|---|---|
+| 1. Discovery | `discovery.py` | Reads `robots.txt` and the WordPress sitemap to identify accessible URLs. | `discovery.json` |
+| 2. Extraction | `fetcher.py`, `bronze.py` | Downloads HTML content while respecting rate limits, timeouts, and website restrictions. | `data/raw/` |
+| 3. Cleaning | `silver.py` | Extracts relevant content and converts HTML into Markdown using Trafilatura and BeautifulSoup. | `data/processed/` |
+| 4. Deduplication | `dedup.py` | Removes exact duplicates, repeated website elements, short documents, and near-duplicates. | Clean document collection |
+| 5. Enrichment | `gold.py`, `chunking.py` | Generates metadata, structured documents, and overlapping text chunks. | `data/gold/` |
+
+### Data Quality and Traceability
+
+Each Gold document includes metadata such as:
+
+- Source URL and document title.
+- Content classification and document type.
+- Capture date and publication date, when available.
+- SHA-256 hash for content identification.
+- Token count for context management.
+
+The pipeline generates 691 chunks using a chunk size of 1,200 characters and an overlap of 150 characters.
+
+### Reproducibility
+
+The pipeline supports offline processing through:
+
+`uv run python scripts/scrape_empresa.py --offline`
+
+This allows Silver and Gold layers to be regenerated from previously captured Bronze data without making additional requests to the company website.
+
+This separation between extraction and transformation improves reproducibility, reduces unnecessary requests, and preserves the original source data for future processing.
 
 ## ⚙️ Instalación
 
