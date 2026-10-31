@@ -1,0 +1,28 @@
+# Entorno (uv): se versionan pyproject.toml, uv.lock y .python-version; nunca .venv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
+
+# Secretos: el .env NUNCA entra al repositorio (usar .env.example)
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Capas Bronze y Silver: se regeneran con el pipeline (uv run python scripts/scrape_empresa.py)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Sistema operativo / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
