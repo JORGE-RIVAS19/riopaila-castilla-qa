@@ -16,6 +16,8 @@ from riopaila_qa.scraping.fetcher import PoliteFetcher
 # Rutas que nunca son contenido editorial (listados, feeds, buscador, API, admin).
 EXCLUDED_PATTERNS = [
     r"/wp-admin/",
+    r"/case-studies/",  # páginas demo de la plantilla del tema (inglés)
+    r"/ticket-login",  # login de PQRS: contenido tras autenticación
     r"/wp-json/",
     r"/wp-login",
     r"/feed/?$",
