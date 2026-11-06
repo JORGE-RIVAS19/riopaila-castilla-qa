@@ -58,9 +58,10 @@ flowchart LR
 
 | Decisión | Elección | Por qué |
 |---|---|---|
-| LLM (Módulo 1) | **Llama 3.2 3B en Ollama** (por defecto) · Gemini/OpenAI opcional | Datos de la empresa sin salir del equipo y costo cero; la API sirve para contexto largo |
+| LLM (Módulo 1) | **Gemini 3.6 Flash** por API para la demo y la evaluación · **Llama 3.2 3B en Ollama** como opción local | En la prueba real, el modelo local tardó 80–125 s por respuesta en CPU y no siguió las reglas; Gemini responde en 3–10 s. Se cambia desde `.env` o la barra lateral |
 | Framework | **LangChain (LCEL)** | Plantillas `ChatPromptTemplate`, `with_structured_output` y cambio de proveedor sin tocar el código |
-| Muestreo | **T = 0.0 · top_p = 0.1** (Q&A, FAQ) · T = 0.3 · top_p = 0.9 (resumen) | Régimen Q1 para hechos y JSON; Q2 para resúmenes (Clase 4) |
+| Muestreo | **T = 0.0 · top_p = 0.1** (Q&A, FAQ) · T = 0.3 · top_p = 0.9 (resumen) | Régimen Q1 para hechos y JSON; Q2 para resúmenes (Clase 4). Gemini 3.x usa muestreo fijo |
+| Resultado | **95,8 %** de éxito en 24 preguntas (v3), 100 % de citas válidas, abstención y rechazo de inyección | Ver `docs/INFORME.md` y `prompts/README.md` |
 | Contexto | **Corpus completo** si cabe; si no, **BM25** + reordenamiento en U | *Lost in the Middle* (Liu et al., 2023) y límite de `num_ctx` del modelo local |
 | Chunking | `RecursiveCharacterTextSplitter` 1 200 chars / 150 de solape, cortando primero por `##` | Fragmentos autocontenidos listos para embeddings |
 | Módulo 2 | `nomic-embed-text-v2-moe` (Ollama) + **ChromaDB** | Embeddings abiertos sin costo de API sobre `chunks.jsonl` |

@@ -72,12 +72,12 @@ def get_chat_model(
 
         if not os.getenv("GOOGLE_API_KEY"):
             raise RuntimeError("Falta GOOGLE_API_KEY en el archivo .env")
-        return ChatGoogleGenerativeAI(
-            model=model,
-            temperature=sampling.temperature,
-            top_p=sampling.top_p,
-            max_output_tokens=2048,
-        )
+        kwargs: dict = {"model": model, "max_output_tokens": 2048}
+        # Gemini 3.x son modelos de razonamiento con muestreo fijo: la API ignora
+        # temperature/top_p (la "regla inversa" de la Clase 4). Solo se envían a 2.x.
+        if not model.startswith("gemini-3"):
+            kwargs.update(temperature=sampling.temperature, top_p=sampling.top_p)
+        return ChatGoogleGenerativeAI(**kwargs)
     if provider == "openai":
         from langchain_openai import ChatOpenAI
 
