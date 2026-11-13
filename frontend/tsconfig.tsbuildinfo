@@ -1,1 +1,1 @@
-{"root":["./src/main.tsx","./src/types.ts","./src/__tests__/sse.test.ts","./src/api/client.ts","./src/api/sse.ts"],"version":"5.9.3"}
+{"root":["./src/main.tsx","./src/types.ts","./src/__tests__/sse.test.ts","./src/api/client.ts","./src/api/sse.ts","./src/components/MessageBubble.tsx","./src/components/RouteBadge.tsx","./src/components/Sources.tsx","./src/components/ToolList.tsx"],"version":"5.9.3"}
