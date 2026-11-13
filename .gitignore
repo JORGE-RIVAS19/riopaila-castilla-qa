@@ -26,3 +26,10 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Módulo 2 · frontend (pnpm) y datos locales del agente
+frontend/node_modules/
+frontend/dist/
+data/qdrant/
+data/memory/
+logs/
