@@ -97,7 +97,7 @@ class LLMSettings:
     ollama_base_url: str = _env("OLLAMA_BASE_URL", "http://localhost:11434")
     ollama_num_ctx: int = int(_env("OLLAMA_NUM_CTX", "16384"))
     openai_model: str = _env("OPENAI_MODEL", "gpt-4o-mini")
-    gemini_model: str = _env("GEMINI_MODEL", "gemini-2.5-flash")
+    gemini_model: str = _env("GEMINI_MODEL", "gemini-3.6-flash")
     temperature: float = float(_env("LLM_TEMPERATURE", "0.0"))
     top_p: float = float(_env("LLM_TOP_P", "0.1"))
     max_context_tokens: int = int(_env("MAX_CONTEXT_TOKENS", "12000"))
