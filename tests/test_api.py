@@ -87,3 +87,11 @@ def test_memoria_store(client: TestClient):
     client.put("/api/users/ana/memory", json={"clave": "cargo", "valor": "analista"})
     client.delete("/api/users/ana/memory/nombre")
     assert {f["clave"] for f in client.get("/api/users/ana/memory").json()} == {"empresa", "cargo"}
+
+
+def test_datos_y_busqueda(client: TestClient):
+    rows = client.get("/api/datos/indicadores").json()
+    assert len(rows) >= 30 and rows[0]["valor_legible"]
+    res = client.post("/api/rag/search", json={"consulta": "bonos de carbono", "k": 3, "modo": "hibrida"}).json()
+    assert len(res["hits"]) == 3 and "bonos" in res["hits"][0]["chunk"]["url"]
+    assert client.get("/api/eval/retrieval").status_code in (200, 404)
