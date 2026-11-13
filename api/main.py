@@ -24,6 +24,8 @@ from api.schemas import (
     Checkpoint,
     ForkRequest,
     ForkResponse,
+    MemoryFact,
+    MemoryFactIn,
     RouteRequest,
     ThreadDetail,
     ThreadSummary,
@@ -149,3 +151,24 @@ def checkpoints(thread_id: str, request: Request, user_id: str = Query("invitado
 def fork(thread_id: str, body: ForkRequest, request: Request) -> ForkResponse:
     """*Time travel*: bifurca el hilo desde un checkpoint anterior."""
     return ForkResponse(thread_id=agent(request).fork(thread_id, body.checkpoint_id, body.user_id))
+
+
+# ---- memoria de largo plazo (Store) ---------------------------------------------------
+
+
+@app.get("/api/users/{user_id}/memory", tags=["memoria"], response_model=list[MemoryFact])
+def get_memory(user_id: str, request: Request) -> list[MemoryFact]:
+    facts = memory.load_profile(agent(request).store, memory.normalize_user_id(user_id))
+    return [MemoryFact(**f) for f in facts]
+
+
+@app.put("/api/users/{user_id}/memory", tags=["memoria"], response_model=MemoryFact)
+def put_memory(user_id: str, body: MemoryFactIn, request: Request) -> MemoryFact:
+    item = memory.save_fact(agent(request).store, memory.normalize_user_id(user_id), body.clave, body.valor)
+    return MemoryFact(key=item["clave"], **item)
+
+
+@app.delete("/api/users/{user_id}/memory/{key}", tags=["memoria"])
+def delete_memory(user_id: str, key: str, request: Request) -> dict:
+    memory.delete_fact(agent(request).store, memory.normalize_user_id(user_id), key)
+    return {"borrado": key}

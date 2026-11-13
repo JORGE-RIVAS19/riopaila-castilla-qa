@@ -78,3 +78,12 @@ def test_hilos_y_time_travel(client: TestClient):
     fork = client.post(f"/api/threads/{tid}/fork", json={"checkpoint_id": cp["checkpoint_id"], "user_id": "ana"}).json()
     assert fork["thread_id"] != tid
     assert client.delete(f"/api/threads/{tid}", params={"user_id": "ana"}).json()["borrado"] == tid
+
+
+def test_memoria_store(client: TestClient):
+    client.post("/api/chat", json={"mensaje": "Me llamo Ana y trabajo en Carvajal", "user_id": "ana"})
+    facts = {f["clave"]: f["valor"] for f in client.get("/api/users/ana/memory").json()}
+    assert facts == {"nombre": "Ana", "empresa": "Carvajal"}
+    client.put("/api/users/ana/memory", json={"clave": "cargo", "valor": "analista"})
+    client.delete("/api/users/ana/memory/nombre")
+    assert {f["clave"] for f in client.get("/api/users/ana/memory").json()} == {"empresa", "cargo"}
