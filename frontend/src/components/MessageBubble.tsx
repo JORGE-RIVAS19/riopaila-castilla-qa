@@ -1,0 +1,60 @@
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import type { ChatMessage } from "../types";
+import { RouteBadge } from "./RouteBadge";
+import { ShieldAlert } from "./Sources";
+
+interface Props {
+  message: ChatMessage;
+  selected: boolean;
+  onSelect: () => void;
+  onRetry?: () => void;
+}
+
+export function MessageBubble({ message: m, selected, onSelect, onRetry }: Props) {
+  if (m.role === "user") {
+    return (
+      <div className="msg msg-user">
+        <div className="bubble">{m.content}</div>
+      </div>
+    );
+  }
+  const toolsUsed = (m.tools ?? []).length;
+  return (
+    <div className={`msg msg-assistant ${selected ? "selected" : ""}`}>
+      <div className="avatar" aria-hidden>
+        🌱
+      </div>
+      <div className="bubble" onClick={onSelect} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onSelect()}>
+        <div className="bubble-meta">
+          {m.ruta && <RouteBadge ruta={m.ruta} compact />}
+          {toolsUsed > 0 && <span className="muted small">🛠️ {toolsUsed} herramienta(s)</span>}
+          {(m.sources ?? []).length > 0 && <span className="muted small">📎 {(m.sources ?? []).length} fuentes</span>}
+          {m.latency_ms !== undefined && <span className="muted small">⏱️ {(m.latency_ms / 1000).toFixed(1)} s</span>}
+        </div>
+        {m.pending && !m.content && (
+          <div className="typing">
+            {m.ruta ? "Pensando" : "Decidiendo la ruta"}
+            <span className="dots" />
+          </div>
+        )}
+        {m.content && (
+          <div className="markdown">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+          </div>
+        )}
+        <ShieldAlert findings={m.shield ?? []} />
+        {m.error && (
+          <div className="inline-error">
+            ⚠️ {m.error}
+            {onRetry && (
+              <button className="btn small" onClick={onRetry}>
+                Reintentar
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
