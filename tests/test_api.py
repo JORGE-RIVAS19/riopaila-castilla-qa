@@ -65,3 +65,16 @@ def test_chat_valida_entrada(client: TestClient):
 def test_chat_sin_stream(client: TestClient):
     body = client.post("/api/chat", json={"mensaje": "¿Cuál fue la utilidad neta de 2022?", "user_id": "ana"}).json()
     assert body["ruta"]["ruta"] == "datos" and "93.241" in body["content"]
+
+
+def test_hilos_y_time_travel(client: TestClient):
+    events = sse_events(client.post("/api/chat/stream", json={"mensaje": "Hola", "user_id": "ana"}).text)
+    tid = events[0]["thread_id"]
+    assert any(t["thread_id"] == tid for t in client.get("/api/threads", params={"user_id": "ana"}).json())
+    detail = client.get(f"/api/threads/{tid}", params={"user_id": "ana"}).json()
+    assert [m["role"] for m in detail["messages"]] == ["user", "assistant"]
+    cps = client.get(f"/api/threads/{tid}/checkpoints", params={"user_id": "ana"}).json()
+    cp = next(c for c in cps if c["mensajes"] == 2)
+    fork = client.post(f"/api/threads/{tid}/fork", json={"checkpoint_id": cp["checkpoint_id"], "user_id": "ana"}).json()
+    assert fork["thread_id"] != tid
+    assert client.delete(f"/api/threads/{tid}", params={"user_id": "ana"}).json()["borrado"] == tid

@@ -14,15 +14,21 @@ import json
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from api.schemas import (
     ChatRequest,
     ChatResponse,
+    Checkpoint,
+    ForkRequest,
+    ForkResponse,
     RouteRequest,
+    ThreadDetail,
+    ThreadSummary,
 )
+from riopaila_qa.agent import memory
 from riopaila_qa.agent.router import route_by_rules
 from riopaila_qa.agent.service import AgentService
 from riopaila_qa.agent.settings import get_agent_settings
@@ -109,3 +115,37 @@ def chat(body: ChatRequest, request: Request) -> ChatResponse:
 def preview_route(body: RouteRequest) -> dict:
     """Decisión del router por reglas, sin ejecutar el agente (para depurar el criterio 2.3)."""
     return route_by_rules(body.mensaje).model_dump()
+
+
+# ---- hilos (memoria de corto plazo) -----------------------------------------------
+
+
+@app.get("/api/threads", tags=["hilos"], response_model=list[ThreadSummary])
+def threads(request: Request, user_id: str = Query("invitado")) -> list[ThreadSummary]:
+    uid = memory.normalize_user_id(user_id)
+    return [ThreadSummary(**t) for t in memory.list_threads(agent(request).store, uid)]
+
+
+@app.get("/api/threads/{thread_id}", tags=["hilos"], response_model=ThreadDetail)
+def thread_detail(thread_id: str, request: Request, user_id: str = Query("invitado")) -> ThreadDetail:
+    """Mensajes del hilo leídos del checkpointer (sobreviven al reinicio del backend)."""
+    return ThreadDetail(**agent(request).thread_messages(thread_id, memory.normalize_user_id(user_id)))
+
+
+@app.delete("/api/threads/{thread_id}", tags=["hilos"])
+def delete_thread(thread_id: str, request: Request, user_id: str = Query("invitado")) -> dict:
+    svc = agent(request)
+    memory.forget_thread(svc.store, svc.checkpointer, memory.normalize_user_id(user_id), thread_id)
+    return {"borrado": thread_id}
+
+
+@app.get("/api/threads/{thread_id}/checkpoints", tags=["hilos"], response_model=list[Checkpoint])
+def checkpoints(thread_id: str, request: Request, user_id: str = Query("invitado")) -> list[Checkpoint]:
+    """*Time travel*: historial de checkpoints del hilo."""
+    return [Checkpoint(**c) for c in agent(request).checkpoints(thread_id, memory.normalize_user_id(user_id))]
+
+
+@app.post("/api/threads/{thread_id}/fork", tags=["hilos"], response_model=ForkResponse)
+def fork(thread_id: str, body: ForkRequest, request: Request) -> ForkResponse:
+    """*Time travel*: bifurca el hilo desde un checkpoint anterior."""
+    return ForkResponse(thread_id=agent(request).fork(thread_id, body.checkpoint_id, body.user_id))
