@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { api } from "../api/client";
 import { MessageBubble } from "../components/MessageBubble";
 import { RouteDetail } from "../components/RouteBadge";
 import { SourceList } from "../components/Sources";
+import { TimeTravel } from "../components/TimeTravel";
 import { ToolList } from "../components/ToolList";
 import { useSession } from "../hooks/session";
 import { useChat } from "../hooks/useChat";
-import type { Checkpoint } from "../types";
 
 // Los cuatro casos de validación del Anuncio 006 + el transversal de blindaje.
 const DEMO = [
@@ -32,50 +31,6 @@ const CAPACIDADES = [
   { icon: "🧠", titulo: "Memoria", texto: "Del hilo y entre conversaciones" },
   { icon: "🛡️", titulo: "Blindaje", texto: "Ignora órdenes ocultas en documentos" },
 ];
-
-function TimeTravel({ threadId, userId }: { threadId: string; userId: string }) {
-  const [cps, setCps] = useState<Checkpoint[] | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const { refreshThreads } = useSession();
-  const load = async () => {
-    try {
-      setCps(await api.checkpoints(threadId, userId));
-      setErr(null);
-    } catch (e) {
-      setErr((e as Error).message);
-    }
-  };
-  const fork = async (cp: string) => {
-    const r = await api.fork(threadId, cp, userId);
-    await refreshThreads();
-    navigate(`/chat/${r.thread_id}`);
-  };
-  return (
-    <div>
-      <button className="btn small" onClick={() => void load()}>
-        {cps ? "Actualizar" : "Ver checkpoints del hilo"}
-      </button>
-      {err && <p className="inline-error">{err}</p>}
-      {cps && (
-        <ol className="checkpoints">
-          {cps.map((c) => (
-            <li key={c.checkpoint_id ?? Math.random()}>
-              <span className="mono small">
-                paso {c.step} · {c.source} · {c.mensajes} msj
-              </span>
-              {c.mensajes > 0 && c.checkpoint_id && (
-                <button className="link" onClick={() => void fork(c.checkpoint_id!)}>
-                  bifurcar desde aquí
-                </button>
-              )}
-            </li>
-          ))}
-        </ol>
-      )}
-    </div>
-  );
-}
 
 export function ChatPage() {
   const { threadId = null } = useParams();
@@ -218,11 +173,16 @@ export function ChatPage() {
           {tab === "hilo" &&
             (threadId ? (
               <>
-                <p className="small">
-                  El estado vive en <b>SqliteSaver</b> (corto plazo): reinicia el backend y recarga esta página; el hilo
-                  sigue aquí. <i>Time travel</i>: bifurca desde un checkpoint anterior.
+                <p className="small muted">
+                  Cada paso del grafo queda como checkpoint en <b>SqliteSaver</b>. <i>Time travel</i>: bifurca desde el
+                  final de cualquier turno y la conversación sigue por otro camino sin tocar este hilo.
                 </p>
-                <TimeTravel threadId={threadId} userId={userId} />
+                <TimeTravel
+                  key={threadId}
+                  threadId={threadId}
+                  userId={userId}
+                  preguntas={messages.filter((m) => m.role === "user").map((m) => m.content)}
+                />
               </>
             ) : (
               <p className="muted small">El hilo se crea con el primer mensaje.</p>
