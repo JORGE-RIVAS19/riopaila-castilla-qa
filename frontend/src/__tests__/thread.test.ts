@@ -28,4 +28,21 @@ describe("fromThread", () => {
     expect(msgs.map((m) => m.role)).toEqual(["summary", "user", "assistant"]);
     expect(msgs[0].content).toContain("Riopaila");
   });
+
+  it("marca como interrumpida la pregunta que quedó sin respuesta (F5 a mitad del streaming)", () => {
+    const msgs = fromThread([
+      { role: "user", content: "Hola, buenas noches", id: "u1" },
+      { role: "user", content: "Hola, buenas noches", id: "u2" },
+      { role: "assistant", content: "Buenas noches", id: "a2", ruta: null },
+      { role: "user", content: "¿Y las ventas?", id: "u3" },
+    ]);
+    expect(msgs.map((m) => [m.role, Boolean(m.error)])).toEqual([
+      ["user", false],
+      ["assistant", true],
+      ["user", false],
+      ["assistant", false],
+      ["user", false],
+      ["assistant", true],
+    ]);
+  });
 });

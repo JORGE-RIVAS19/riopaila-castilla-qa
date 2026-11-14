@@ -179,7 +179,11 @@ export function ChatPage() {
         <div className="tab-body">
           {!selected && tab !== "hilo" && <p className="muted small">Envía un mensaje para ver la traza del turno.</p>}
           {selected && tab === "ruta" &&
-            (selected.ruta ? <RouteDetail ruta={selected.ruta} /> : <p className="muted small">Esperando al router…</p>)}
+            (selected.ruta ? (
+              <RouteDetail ruta={selected.ruta} />
+            ) : (
+              <p className="muted small">{selected.pending ? "Esperando al router…" : "Este turno no alcanzó a pasar por el router."}</p>
+            ))}
           {selected && tab === "herramientas" && <ToolList tools={selected.tools ?? []} />}
           {selected && tab === "fuentes" && <SourceList sources={selected.sources ?? []} />}
           {tab === "hilo" &&
