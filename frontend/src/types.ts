@@ -79,6 +79,8 @@ export interface ChatMessage {
   pending?: boolean;
   /** El historial se resumió durante este turno. */
   summarized?: boolean;
+  /** El verificador de cifras descartó un borrador con números sin respaldo y el agente lo rehízo. */
+  verified?: boolean;
 }
 
 export interface ThreadSummary {
@@ -137,6 +139,7 @@ export type StreamEvent =
   | { type: "tool_end"; id: string; name: string; latency_ms: number; status: string; artifact: ToolRun["artifact"] }
   | { type: "token"; text: string }
   | { type: "summary" }
+  | { type: "verificacion" }
   | { type: "error"; message: string }
   | {
       type: "final";
@@ -148,4 +151,5 @@ export type StreamEvent =
       latency_ms: number;
       error: string | null;
       resumen?: boolean;
+      verificacion?: boolean;
     };

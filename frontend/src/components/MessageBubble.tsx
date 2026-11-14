@@ -45,6 +45,14 @@ export function MessageBubble({ message: m, selected, onSelect, onRetry }: Props
               🗜️ historial resumido
             </span>
           )}
+          {m.verified && (
+            <span
+              className="muted small"
+              title="El borrador traía números que no salieron de una herramienta: el verificador lo descartó y el agente lo rehízo con comparar_cifras"
+            >
+              🔢 cifras verificadas
+            </span>
+          )}
           {m.latency_ms !== undefined && <span className="muted small">⏱️ {(m.latency_ms / 1000).toFixed(1)} s</span>}
         </div>
         {m.pending && !m.content && (
