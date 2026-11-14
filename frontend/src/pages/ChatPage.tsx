@@ -6,6 +6,7 @@ import { SourceList } from "../components/Sources";
 import { TimeTravel } from "../components/TimeTravel";
 import { ToolList } from "../components/ToolList";
 import { useSession } from "../hooks/session";
+import { usePanel } from "../hooks/panels";
 import { useChat } from "../hooks/useChat";
 
 // Los cuatro casos de validación del Anuncio 006 + el transversal de blindaje.
@@ -40,6 +41,7 @@ export function ChatPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tab, setTab] = useState<"ruta" | "herramientas" | "fuentes" | "hilo">("ruta");
   const listRef = useRef<HTMLDivElement>(null);
+  const [inspector, alternarInspector] = usePanel("inspector", true);
 
   const onThreadCreated = useCallback((id: string) => navigate(`/chat/${id}`, { replace: true }), [navigate]);
   const onTurnFinished = useCallback(() => void refreshThreads(), [refreshThreads]);
@@ -75,7 +77,7 @@ export function ChatPage() {
   };
 
   return (
-    <div className="chat-layout">
+    <div className={`chat-layout ${inspector ? "" : "no-inspector"}`}>
       <section className="chat">
         <div className="chat-scroll" ref={listRef}>
           {loading && <p className="muted center">Cargando el hilo desde el checkpointer…</p>}
@@ -156,6 +158,13 @@ export function ChatPage() {
         </p>
       </section>
 
+      {!inspector && (
+        <button className="inspector-rail" onClick={alternarInspector} title="Mostrar el inspector del turno" aria-expanded={false}>
+          <span aria-hidden>🔍</span>
+          <span className="rail-text">Inspector</span>
+        </button>
+      )}
+      {inspector && (
       <aside className="inspector" aria-label="Inspector del turno">
         <div className="tabs" role="tablist">
           {(["ruta", "herramientas", "fuentes", "hilo"] as const).map((t) => (
@@ -163,6 +172,9 @@ export function ChatPage() {
               {t === "ruta" ? "Router" : t === "herramientas" ? "Herramientas" : t === "fuentes" ? "Fuentes" : "Hilo"}
             </button>
           ))}
+          <button className="tab tab-close" onClick={alternarInspector} title="Ocultar el inspector" aria-label="Ocultar el inspector">
+            »
+          </button>
         </div>
         <div className="tab-body">
           {!selected && tab !== "hilo" && <p className="muted small">Envía un mensaje para ver la traza del turno.</p>}
@@ -189,6 +201,7 @@ export function ChatPage() {
             ))}
         </div>
       </aside>
+      )}
     </div>
   );
 }
