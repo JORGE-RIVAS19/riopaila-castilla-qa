@@ -104,6 +104,29 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--green-200);
 .markdown ul, .markdown ol { margin: 0.35rem 0; padding-left: 1.3rem; }
 .typing { color: var(--muted); font-style: italic; }
 
+/* ---- gráficas de datos: barras finas de un solo tono, etiquetas directas, sin ejes ---- */
+.data-chart { margin: 0.7rem 0 0.2rem; padding: 0.8rem 0.9rem 0.6rem; border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(180deg, #fff, var(--sugar)); display: flex; flex-direction: column; gap: 0.75rem; animation: msg-in 0.3s ease-out both; }
+.chart-group figcaption { font-size: 0.86rem; margin-bottom: 0.45rem; color: var(--green-900); }
+/* una sola rejilla para todas las filas: la pista de las barras mide lo mismo en todas (escala honesta) */
+.bars { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px 0.6rem; font-size: 0.84rem; }
+.bar-row { display: contents; }
+.bar-row:hover .bar-fill { filter: brightness(1.12); }
+.bar-label { color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar-track { height: 14px; display: block; }
+.bar-fill { display: block; height: 100%; background: var(--green-500); border-radius: 0 4px 4px 0; transform-origin: left; animation: grow 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+/* «más de»: el final abierto con textura dice que la cifra real es mayor (no solo con color) */
+.bar-fill.open { border-radius: 0; background: linear-gradient(90deg, var(--green-500) calc(100% - 18px), transparent calc(100% - 18px)), repeating-linear-gradient(45deg, var(--green-500) 0 3px, transparent 3px 6px); }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.bar-value { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
+.stat-tile { display: flex; flex-direction: column; gap: 0.1rem; }
+.stat-value { font-size: 1.9rem; font-weight: 700; color: var(--green-900); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat-qual { font-size: 1rem; font-weight: 500; color: var(--muted); margin-right: 0.25rem; }
+.stat-unit { font-size: 0.95rem; font-weight: 500; color: var(--muted); }
+.delta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; padding: 0.45rem 0.7rem; border-radius: 10px; background: var(--green-50); border: 1px dashed var(--green-500); font-size: 0.86rem; }
+.chart-foot { margin: 0; }
+.chart-foot a { white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .bar-fill, .data-chart { animation: none; } }
+
 /* ---- «pensando» en vivo: los pasos reales del turno (router → herramientas → redacción) ---- */
 .msg { animation: msg-in 0.28s ease-out both; }
 @keyframes msg-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }

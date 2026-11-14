@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "../types";
 import { RouteBadge } from "./RouteBadge";
 import { ShieldAlert } from "./Sources";
+import { DataChart } from "./DataChart";
 import { ThinkingSteps } from "./ThinkingSteps";
 
 interface Props {
@@ -63,6 +64,7 @@ export function MessageBubble({ message: m, selected, onSelect, onRetry }: Props
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
           </div>
         )}
+        {!m.pending && <DataChart message={m} />}
         <ShieldAlert findings={m.shield ?? []} />
         {m.error && (
           <div className="inline-error">
