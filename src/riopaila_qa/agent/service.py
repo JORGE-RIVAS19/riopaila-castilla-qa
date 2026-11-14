@@ -19,7 +19,7 @@ from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, Too
 
 from riopaila_qa.agent import memory
 from riopaila_qa.agent.embeddings import get_embeddings
-from riopaila_qa.agent.graph import AgentDeps, build_graph
+from riopaila_qa.agent.graph import AgentDeps, build_graph, es_aviso_verificador, es_mensaje_real_del_usuario
 from riopaila_qa.agent.settings import AgentSettings, get_agent_settings
 from riopaila_qa.agent.tools import AgentContext, build_tools
 from riopaila_qa.config import LLMSettings, Paths
@@ -79,6 +79,7 @@ class TurnTrace:
     error: str | None = None
     latencia_ms: float = 0.0
     resumen: bool = False  # True si SummarizationMiddleware compactó el historial en este turno
+    verificacion: bool = False  # True si el verificador de cifras obligó a rehacer la respuesta
 
 
 class AgentService:
@@ -190,6 +191,13 @@ class AgentService:
                         continue
                     if not ns and node == "agente":
                         continue  # el resumen del subgrafo repite mensajes ya emitidos desde dentro
+                    if node.startswith("verificar_cifras"):
+                        aviso = next((m for m in update.get("messages", []) or [] if es_aviso_verificador(m)), None)
+                        if aviso is not None:
+                            # El borrador traía números que no salieron de una herramienta: se descarta.
+                            trace.verificacion = True
+                            yield {"type": "verificacion"}
+                        continue
                     if "Summarization" in node:
                         # SummarizationMiddleware reescribe el historial (resumen + últimos mensajes):
                         # esos mensajes son de turnos anteriores y no deben volver a aparecer como eventos.
@@ -249,6 +257,7 @@ class AgentService:
             "latency_ms": trace.latencia_ms,
             "error": trace.error,
             "resumen": trace.resumen,
+            "verificacion": trace.verificacion,
         }
 
     def run_turn(self, message: str, thread_id: str | None, user_id: str) -> dict:
@@ -277,9 +286,11 @@ class AgentService:
         rutas = list(values.get("rutas", []) or [])
         messages = values.get("messages", []) or []
         # Tras un resumen, el estado solo conserva los últimos turnos: las rutas se alinean desde el final.
-        humanos = sum(1 for m in messages if isinstance(m, HumanMessage) and not is_summary(m))
+        humanos = sum(1 for m in messages if es_mensaje_real_del_usuario(m))
         out, turn = [], max(len(rutas) - humanos, 0) - 1
         for m in messages:
+            if es_aviso_verificador(m):
+                continue  # mensaje interno del verificador de cifras
             if is_summary(m):
                 text = message_text(m).removeprefix(SUMMARY_PREFIX).strip()
                 out.append({"role": "summary", "content": text, "id": m.id})

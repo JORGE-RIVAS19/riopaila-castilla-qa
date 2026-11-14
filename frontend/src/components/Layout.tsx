@@ -2,6 +2,31 @@ import { useState, type FormEvent } from "react";
 import { NavLink, Outlet, useMatch, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useSession } from "../hooks/session";
+import type { ThreadSummary } from "../types";
+
+/** «hace 5 min», «hace 2 h», «ayer»… a partir de la fecha ISO del Store. */
+export function haceCuanto(iso?: string | null, ahora = Date.now()): string {
+  if (!iso) return "sin fecha";
+  const min = Math.max(0, Math.round((ahora - new Date(iso).getTime()) / 60000));
+  if (min < 1) return "ahora";
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.round(h / 24);
+  return d === 1 ? "ayer" : `hace ${d} días`;
+}
+
+/** Hilos agrupados en Hoy / Ayer / Antes, conservando el orden del backend. */
+export function agruparHilos(threads: ThreadSummary[], ahora = new Date()): [string, ThreadSummary[]][] {
+  const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()).getTime();
+  const grupos: Record<string, ThreadSummary[]> = { Hoy: [], Ayer: [], Antes: [] };
+  for (const t of threads) {
+    const ts = t.actualizado ? new Date(t.actualizado).getTime() : 0;
+    const g = ts >= inicioHoy ? "Hoy" : ts >= inicioHoy - 86400000 ? "Ayer" : "Antes";
+    grupos[g].push(t);
+  }
+  return Object.entries(grupos).filter(([, v]) => v.length > 0);
+}
 
 function StatusPill() {
   const { health, healthError } = useSession();
@@ -76,17 +101,30 @@ export function Layout() {
         <nav className="threads" aria-label="Hilos">
           <div className="section-title">Hilos de {userId}</div>
           {threads.length === 0 && <p className="muted small">Aún no hay conversaciones.</p>}
-          {threads.map((t) => (
-            <div key={t.thread_id} className={`thread ${t.thread_id === threadId ? "active" : ""}`}>
-              <NavLink to={`/chat/${t.thread_id}`}>
-                <span className="thread-title">{t.titulo || "Conversación"}</span>
-                <span className="muted small">
-                  {t.turnos} turno(s) · {t.thread_id.slice(0, 8)}
-                </span>
-              </NavLink>
-              <button className="btn icon ghost" title="Borrar hilo" onClick={() => void remove(t.thread_id)}>
-                ✕
-              </button>
+          {agruparHilos(threads).map(([grupo, hilos]) => (
+            <div key={grupo} className="thread-group">
+              <div className="thread-group-title">{grupo}</div>
+              {hilos.map((t) => {
+                const fork = (t.titulo ?? "").startsWith("Bifurcación");
+                return (
+                  <div key={t.thread_id} className={`thread ${t.thread_id === threadId ? "active" : ""}`}>
+                    <NavLink to={`/chat/${t.thread_id}`} title={t.titulo ?? ""}>
+                      <span className={`thread-icon ${fork ? "fork" : ""}`} aria-hidden>
+                        {fork ? "⑂" : "💬"}
+                      </span>
+                      <span className="thread-text">
+                        <span className="thread-title">{t.titulo || "Conversación"}</span>
+                        <span className="thread-meta">
+                          {haceCuanto(t.actualizado)} · <span className="turns">{t.turnos} turno{t.turnos === 1 ? "" : "s"}</span>
+                        </span>
+                      </span>
+                    </NavLink>
+                    <button className="btn icon ghost thread-del" title="Borrar hilo y su checkpoint" onClick={() => void remove(t.thread_id)}>
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           ))}
         </nav>

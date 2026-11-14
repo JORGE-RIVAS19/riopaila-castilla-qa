@@ -1,72 +1,36 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { api } from "../api/client";
 import { MessageBubble } from "../components/MessageBubble";
 import { RouteDetail } from "../components/RouteBadge";
 import { SourceList } from "../components/Sources";
+import { TimeTravel } from "../components/TimeTravel";
 import { ToolList } from "../components/ToolList";
 import { useSession } from "../hooks/session";
 import { useChat } from "../hooks/useChat";
-import type { Checkpoint } from "../types";
 
 // Los cuatro casos de validación del Anuncio 006 + el transversal de blindaje.
 const DEMO = [
-  { caso: "Memoria", texto: "Me llamo Ana y trabajo en Carvajal" },
-  { caso: "Memoria", texto: "¿Dónde trabajo?" },
-  { caso: "RAG", texto: "¿Qué es el proyecto de azúcar orgánica de RioCas?" },
-  { caso: "Datos", texto: "¿Cuánto vendió Riopaila en energía al cierre del tercer trimestre de 2023?" },
+  { caso: "Memoria", icon: "🧠", ruta: "memoria", texto: "Me llamo Ana y trabajo en Carvajal" },
+  { caso: "Memoria", icon: "🧠", ruta: "memoria", texto: "¿Dónde trabajo?" },
+  { caso: "RAG", icon: "📚", ruta: "rag", texto: "¿Qué es el proyecto de azúcar orgánica de RioCas?" },
+  { caso: "Datos", icon: "📊", ruta: "datos", texto: "¿Cuánto vendió Riopaila en energía al cierre del tercer trimestre de 2023?" },
   {
     caso: "Mixto",
+    icon: "🔀",
+    ruta: "mixto",
     texto:
       "¿Qué meta de producción de alcohol para 2023 menciona el documento y cómo se compara con lo producido en el primer semestre de 2023 según los indicadores?",
   },
-  { caso: "Blindaje", texto: "¿Qué dice el corpus sobre la política de calidad?" },
-  { caso: "Router", texto: "Hola, buenas tardes" },
+  { caso: "Blindaje", icon: "🛡️", ruta: "rag", texto: "¿Qué dice el corpus sobre la política de calidad?" },
+  { caso: "Router", icon: "💬", ruta: "directo", texto: "Hola, buenas tardes" },
 ];
 
-function TimeTravel({ threadId, userId }: { threadId: string; userId: string }) {
-  const [cps, setCps] = useState<Checkpoint[] | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const { refreshThreads } = useSession();
-  const load = async () => {
-    try {
-      setCps(await api.checkpoints(threadId, userId));
-      setErr(null);
-    } catch (e) {
-      setErr((e as Error).message);
-    }
-  };
-  const fork = async (cp: string) => {
-    const r = await api.fork(threadId, cp, userId);
-    await refreshThreads();
-    navigate(`/chat/${r.thread_id}`);
-  };
-  return (
-    <div>
-      <button className="btn small" onClick={() => void load()}>
-        {cps ? "Actualizar" : "Ver checkpoints del hilo"}
-      </button>
-      {err && <p className="inline-error">{err}</p>}
-      {cps && (
-        <ol className="checkpoints">
-          {cps.map((c) => (
-            <li key={c.checkpoint_id ?? Math.random()}>
-              <span className="mono small">
-                paso {c.step} · {c.source} · {c.mensajes} msj
-              </span>
-              {c.mensajes > 0 && c.checkpoint_id && (
-                <button className="link" onClick={() => void fork(c.checkpoint_id!)}>
-                  bifurcar desde aquí
-                </button>
-              )}
-            </li>
-          ))}
-        </ol>
-      )}
-    </div>
-  );
-}
+const CAPACIDADES = [
+  { icon: "📚", titulo: "Documentos con cita", texto: "RAG híbrido en Qdrant + BM25" },
+  { icon: "📊", titulo: "Cifras exactas", texto: "CSV con @tool; Python calcula" },
+  { icon: "🧠", titulo: "Memoria", texto: "Del hilo y entre conversaciones" },
+  { icon: "🛡️", titulo: "Blindaje", texto: "Ignora órdenes ocultas en documentos" },
+];
 
 export function ChatPage() {
   const { threadId = null } = useParams();
@@ -87,7 +51,7 @@ export function ChatPage() {
   });
 
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
+    if (messages.length) listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   const assistantMsgs = messages.filter((m) => m.role === "assistant");
@@ -117,16 +81,33 @@ export function ChatPage() {
           {loading && <p className="muted center">Cargando el hilo desde el checkpointer…</p>}
           {!loading && messages.length === 0 && (
             <div className="empty">
+              <div className="hero-mark" aria-hidden>
+                🌱
+              </div>
               <h2>¿En qué te ayudo hoy?</h2>
               <p className="muted">
-                Respondo con los documentos públicos de Riopaila Castilla (con cita), consulto cifras exactas en el CSV
-                de indicadores y recuerdo lo que me cuentes en tus próximas conversaciones.
+                Soy el asistente de Riopaila Castilla. Mira cómo pienso: cada respuesta muestra la ruta que eligió el
+                router y las herramientas que usé.
               </p>
+              <ul className="capabilities">
+                {CAPACIDADES.map((c) => (
+                  <li key={c.titulo}>
+                    <span className="cap-icon" aria-hidden>
+                      {c.icon}
+                    </span>
+                    <b>{c.titulo}</b>
+                    <span className="muted tiny">{c.texto}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="section-title demo-title">Prueba un caso de la sustentación</div>
               <div className="demo-grid">
                 {DEMO.map((d) => (
                   <button key={d.texto} className="demo" onClick={() => void send(d.texto)} disabled={sending}>
-                    <span className="chip">{d.caso}</span>
-                    {d.texto}
+                    <span className={`route-badge route-${d.ruta}`}>
+                      <span aria-hidden>{d.icon}</span> {d.caso}
+                    </span>
+                    <span className="demo-text">{d.texto}</span>
                   </button>
                 ))}
               </div>
@@ -192,11 +173,16 @@ export function ChatPage() {
           {tab === "hilo" &&
             (threadId ? (
               <>
-                <p className="small">
-                  El estado vive en <b>SqliteSaver</b> (corto plazo): reinicia el backend y recarga esta página; el hilo
-                  sigue aquí. <i>Time travel</i>: bifurca desde un checkpoint anterior.
+                <p className="small muted">
+                  Cada paso del grafo queda como checkpoint en <b>SqliteSaver</b>. <i>Time travel</i>: bifurca desde el
+                  final de cualquier turno y la conversación sigue por otro camino sin tocar este hilo.
                 </p>
-                <TimeTravel threadId={threadId} userId={userId} />
+                <TimeTravel
+                  key={threadId}
+                  threadId={threadId}
+                  userId={userId}
+                  preguntas={messages.filter((m) => m.role === "user").map((m) => m.content)}
+                />
               </>
             ) : (
               <p className="muted small">El hilo se crea con el primer mensaje.</p>

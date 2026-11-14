@@ -46,8 +46,25 @@ def get_client(settings: AgentSettings) -> QdrantClient:
             _CLIENTS[key] = QdrantClient(url=settings.qdrant_url)
         else:
             settings.qdrant_path.mkdir(parents=True, exist_ok=True)
-            _CLIENTS[key] = QdrantClient(path=str(settings.qdrant_path))
+            try:
+                _CLIENTS[key] = QdrantClient(path=str(settings.qdrant_path))
+            except RuntimeError as exc:
+                if "already accessed" not in str(exc):
+                    raise
+                raise QdrantOcupadoError(settings.qdrant_path) from exc
     return _CLIENTS[key]
+
+
+class QdrantOcupadoError(RuntimeError):
+    """El modo embebido bloquea la carpeta: otro proceso (backend viejo o build_index) la tiene abierta."""
+
+    def __init__(self, path: object):
+        super().__init__(
+            f"La carpeta de Qdrant ({path}) está en uso por otro proceso: un backend anterior que sigue "
+            "corriendo o build_index.py. Detén ese proceso con Ctrl+C en su terminal; si no lo encuentras, "
+            "en PowerShell: Get-Process python* | Stop-Process -Force. Para varios procesos a la vez, "
+            "usa Qdrant en modo servidor (QDRANT_URL)."
+        )
 
 
 def close_clients() -> None:
