@@ -94,6 +94,9 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--green-200);
 .markdown p { margin: 0.35rem 0; }
 .markdown ul, .markdown ol { margin: 0.35rem 0; padding-left: 1.3rem; }
 .typing { color: var(--muted); font-style: italic; }
+.summary-note { display: block; border: 1px dashed var(--green-500); background: var(--sugar); border-radius: var(--radius); padding: 0.55rem 0.9rem; font-size: 0.88rem; color: var(--muted); }
+.summary-note > summary { cursor: pointer; color: var(--green-900); font-weight: 600; }
+.summary-note .markdown { margin-top: 0.4rem; color: var(--ink); }
 .dots::after { content: "…"; animation: blink 1.2s infinite; }
 @keyframes blink { 50% { opacity: 0.2; } }
 .composer { display: flex; gap: 0.6rem; padding: 0.7rem clamp(0.8rem, 3vw, 2rem); border-top: 1px solid var(--line); background: #fff; }

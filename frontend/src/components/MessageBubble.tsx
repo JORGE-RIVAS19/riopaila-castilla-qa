@@ -12,6 +12,16 @@ interface Props {
 }
 
 export function MessageBubble({ message: m, selected, onSelect, onRetry }: Props) {
+  if (m.role === "summary") {
+    return (
+      <details className="msg summary-note">
+        <summary>🗜️ Resumen automático de los turnos anteriores (SummarizationMiddleware)</summary>
+        <div className="markdown">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+        </div>
+      </details>
+    );
+  }
   if (m.role === "user") {
     return (
       <div className="msg msg-user">
@@ -30,6 +40,11 @@ export function MessageBubble({ message: m, selected, onSelect, onRetry }: Props
           {m.ruta && <RouteBadge ruta={m.ruta} compact />}
           {toolsUsed > 0 && <span className="muted small">🛠️ {toolsUsed} herramienta(s)</span>}
           {(m.sources ?? []).length > 0 && <span className="muted small">📎 {(m.sources ?? []).length} fuentes</span>}
+          {m.summarized && (
+            <span className="muted small" title="La conversación superó el umbral de tokens y se resumió">
+              🗜️ historial resumido
+            </span>
+          )}
           {m.latency_ms !== undefined && <span className="muted small">⏱️ {(m.latency_ms / 1000).toFixed(1)} s</span>}
         </div>
         {m.pending && !m.content && (

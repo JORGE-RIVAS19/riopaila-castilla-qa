@@ -30,6 +30,12 @@ from riopaila_qa.rag.retriever import HybridRetriever
 from riopaila_qa.structured import load_indicadores
 
 STREAM_NODES = {"model", "directo"}  # solo estos nodos emiten tokens al usuario
+SUMMARY_PREFIX = "Here is a summary of the conversation to date:"
+
+
+def is_summary(m: object) -> bool:
+    """Mensaje que inserta SummarizationMiddleware en lugar del historial antiguo."""
+    return isinstance(m, HumanMessage) and (m.additional_kwargs or {}).get("lc_source") == "summarization"
 
 
 def message_text(msg: Any) -> str:
@@ -72,6 +78,7 @@ class TurnTrace:
     respuesta: str = ""
     error: str | None = None
     latencia_ms: float = 0.0
+    resumen: bool = False  # True si SummarizationMiddleware compactó el historial en este turno
 
 
 class AgentService:
@@ -183,6 +190,13 @@ class AgentService:
                         continue
                     if not ns and node == "agente":
                         continue  # el resumen del subgrafo repite mensajes ya emitidos desde dentro
+                    if "Summarization" in node:
+                        # SummarizationMiddleware reescribe el historial (resumen + últimos mensajes):
+                        # esos mensajes son de turnos anteriores y no deben volver a aparecer como eventos.
+                        if any(is_summary(m) for m in update.get("messages", []) or []):
+                            trace.resumen = True
+                            yield {"type": "summary"}
+                        continue
                     if node == "router" and update.get("ruta"):
                         trace.ruta = update["ruta"]
                         yield {"type": "route", **update["ruta"]}
@@ -234,6 +248,7 @@ class AgentService:
             "herramientas": trace.herramientas,
             "latency_ms": trace.latencia_ms,
             "error": trace.error,
+            "resumen": trace.resumen,
         }
 
     def run_turn(self, message: str, thread_id: str | None, user_id: str) -> dict:
@@ -260,9 +275,15 @@ class AgentService:
         state = self.graph.get_state(self.config(thread_id, user_id))
         values = state.values or {}
         rutas = list(values.get("rutas", []) or [])
-        out, turn = [], -1
-        for m in values.get("messages", []):
-            if isinstance(m, HumanMessage):
+        messages = values.get("messages", []) or []
+        # Tras un resumen, el estado solo conserva los últimos turnos: las rutas se alinean desde el final.
+        humanos = sum(1 for m in messages if isinstance(m, HumanMessage) and not is_summary(m))
+        out, turn = [], max(len(rutas) - humanos, 0) - 1
+        for m in messages:
+            if is_summary(m):
+                text = message_text(m).removeprefix(SUMMARY_PREFIX).strip()
+                out.append({"role": "summary", "content": text, "id": m.id})
+            elif isinstance(m, HumanMessage):
                 turn += 1
                 out.append({"role": "user", "content": message_text(m), "id": m.id})
             elif isinstance(m, AIMessage):

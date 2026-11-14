@@ -10,7 +10,9 @@ export function fromThread(raw: RawThreadMessage[]): ChatMessage[] {
   const out: ChatMessage[] = [];
   let tools: ToolRun[] = [];
   for (const m of raw) {
-    if (m.role === "user") {
+    if (m.role === "summary") {
+      out.push({ id: m.id ?? uid(), role: "summary", content: m.content ?? "" });
+    } else if (m.role === "user") {
       tools = [];
       out.push({ id: m.id ?? uid(), role: "user", content: m.content ?? "" });
     } else if (m.role === "tool_call") {
@@ -113,6 +115,9 @@ export function useChat({ threadId, userId, onThreadCreated, onTurnFinished }: O
             sources: ev.name === "buscar_documentos" ? [...(m.sources ?? []), ...(ev.artifact?.hits ?? [])] : m.sources,
             shield: [...(m.shield ?? []), ...(ev.artifact?.shield ?? [])],
           }));
+          break;
+        case "summary":
+          patchLast((m) => ({ ...m, summarized: true }));
           break;
         case "token":
           patchLast((m) => ({ ...m, content: m.content + ev.text }));
