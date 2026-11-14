@@ -18,4 +18,14 @@ describe("fromThread", () => {
     expect(msgs[1].tools?.[0].name).toBe("buscar_documentos");
     expect(msgs[1].sources).toHaveLength(1);
   });
+
+  it("muestra el resumen de SummarizationMiddleware como nota y no como mensaje del usuario", () => {
+    const msgs = fromThread([
+      { role: "summary", content: "Jorge preguntó por la historia de Riopaila.", id: "s1" },
+      { role: "user", content: "¿Y las ventas de energía?", id: "u2" },
+      { role: "assistant", content: "21.342 millones COP", id: "a2", ruta: null },
+    ]);
+    expect(msgs.map((m) => m.role)).toEqual(["summary", "user", "assistant"]);
+    expect(msgs[0].content).toContain("Riopaila");
+  });
 });

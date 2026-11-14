@@ -11,7 +11,9 @@ START ─► router ─┬─► directo ─► END        (saludos, preguntas s
 * ``agente``: arnés ``create_agent`` con ``@tool`` y middleware:
   ``dynamic_prompt`` (perfil + decisión del router), filtro de herramientas por
   ruta (``wrap_model_call``), ``SummarizationMiddleware`` (resume cuando la
-  conversación supera el umbral de tokens), reintentos y límites de llamadas.
+  conversación supera el umbral de tokens), verificador de cifras (``after_model``:
+  si la respuesta trae números que no salieron de una herramienta, se descarta y el
+  modelo la rehace con ``comparar_cifras``), reintentos y límites de llamadas.
 * ``checkpointer`` (SqliteSaver) + ``store`` (SqliteStore) se pasan al compilar.
 """
 
@@ -30,15 +32,17 @@ from langchain.agents.middleware import (
     ModelRetryMiddleware,
     SummarizationMiddleware,
     ToolCallLimitMiddleware,
+    after_model,
     dynamic_prompt,
     wrap_model_call,
 )
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import HumanMessage, SystemMessage, trim_messages
+from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage, SystemMessage, ToolMessage, trim_messages
 from langgraph.graph import END, START, StateGraph
 from langgraph.runtime import Runtime
 
 from riopaila_qa.agent import memory
+from riopaila_qa.agent.numeros import cifras_sin_respaldo
 from riopaila_qa.agent.router import TOOLS_BY_ROUTE, RouteDecision, route
 from riopaila_qa.agent.settings import AgentSettings
 from riopaila_qa.agent.tools import AgentContext
@@ -97,9 +101,31 @@ def load_agent_prompt() -> str:
 
 def last_human_text(messages: list) -> str:
     for m in reversed(messages):
-        if isinstance(m, HumanMessage):
+        if es_mensaje_real_del_usuario(m):
             return m.text if hasattr(m, "text") else str(m.content)
     return ""
+
+
+AVISO_VERIFICADOR = "verificador_cifras"
+
+
+def es_aviso_verificador(m: object) -> bool:
+    """Mensaje interno con el que el verificador de cifras pide rehacer la respuesta."""
+    return isinstance(m, HumanMessage) and (m.additional_kwargs or {}).get("lc_source") == AVISO_VERIFICADOR
+
+
+def es_mensaje_real_del_usuario(m: object) -> bool:
+    """HumanMessage escrito por la persona (ni el resumen del historial ni el aviso del verificador)."""
+    return isinstance(m, HumanMessage) and (m.additional_kwargs or {}).get("lc_source") not in (
+        "summarization",
+        AVISO_VERIFICADOR,
+    )
+
+
+def _texto(m: AIMessage) -> str:
+    if isinstance(m.content, str):
+        return m.content
+    return "".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in m.content)
 
 
 def _fecha() -> str:
@@ -153,6 +179,31 @@ def build_graph(deps: AgentDeps, checkpointer=None, store=None):
         allowed = set(TOOLS_BY_ROUTE.get(d.get("ruta", "rag"), ()))
         return handler(request.override(tools=[t for t in request.tools if getattr(t, "name", "") in allowed]))
 
+    @after_model(can_jump_to=["model"])
+    def verificar_cifras(state: AgentState, runtime: Runtime[AgentContext]) -> dict | None:
+        """El LLM no calcula: cada número de la respuesta debe estar en la evidencia del turno."""
+        msgs = state["messages"]
+        last = msgs[-1] if msgs else None
+        if not isinstance(last, AIMessage) or last.tool_calls:
+            return None
+        inicio = max((i for i, m in enumerate(msgs) if es_mensaje_real_del_usuario(m)), default=0)
+        if any(es_aviso_verificador(m) for m in msgs[inicio:]):
+            return None  # un solo reintento por turno: nunca un bucle
+        evidencia = [str(m.content) for m in msgs if isinstance(m, ToolMessage)]
+        evidencia += [str(m.content) for m in msgs if isinstance(m, HumanMessage) and not es_aviso_verificador(m)]
+        faltan = cifras_sin_respaldo(_texto(last), evidencia)
+        if not faltan:
+            return None
+        aviso = HumanMessage(
+            "VERIFICADOR DE CIFRAS (mensaje automático, no del usuario): tu respuesta trae números que no "
+            f"aparecen en ningún resultado de herramienta: {', '.join(faltan)}. No hagas aritmética mental. "
+            "Si es una diferencia, razón o porcentaje, llama a comparar_cifras con los valores exactos de "
+            "consultar_indicadores (si la cifra dice «más de», acláralo); si no tienes la herramienta, quita "
+            "esos números. Luego responde de nuevo al usuario.",
+            additional_kwargs={"lc_source": AVISO_VERIFICADOR},
+        )
+        return {"messages": [RemoveMessage(id=last.id), aviso], "jump_to": "model"}
+
     agent = create_agent(
         model=deps.model,
         tools=deps.tools,
@@ -166,6 +217,7 @@ def build_graph(deps: AgentDeps, checkpointer=None, store=None):
                 trigger=("tokens", s.summary_trigger_tokens),
                 keep=("messages", s.summary_keep_messages),
             ),
+            verificar_cifras,
             ModelRetryMiddleware(max_retries=2, initial_delay=1.5),
             ModelCallLimitMiddleware(run_limit=6, exit_behavior="end"),
             ToolCallLimitMiddleware(run_limit=6),
@@ -184,7 +236,11 @@ def build_graph(deps: AgentDeps, checkpointer=None, store=None):
         profile, uid = _profile(runtime)
         system = render_system_prompt(template, state.get("ruta"), profile, uid, cat)
         history = trim_messages(
-            [m for m in state["messages"] if m.type in ("human", "ai") and not getattr(m, "tool_calls", None)],
+            [
+                m
+                for m in state["messages"]
+                if m.type in ("human", "ai") and not getattr(m, "tool_calls", None) and not es_aviso_verificador(m)
+            ],
             max_tokens=s.direct_history_tokens,
             token_counter="approximate",
             strategy="last",

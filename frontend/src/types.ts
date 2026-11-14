@@ -67,7 +67,8 @@ export interface ToolRun {
 
 export interface ChatMessage {
   id: string;
-  role: "user" | "assistant";
+  /** "summary": resumen que SummarizationMiddleware dejó en lugar de los turnos antiguos. */
+  role: "user" | "assistant" | "summary";
   content: string;
   ruta?: RouteDecision | null;
   tools?: ToolRun[];
@@ -76,6 +77,10 @@ export interface ChatMessage {
   latency_ms?: number;
   error?: string | null;
   pending?: boolean;
+  /** El historial se resumió durante este turno. */
+  summarized?: boolean;
+  /** El verificador de cifras descartó un borrador con números sin respaldo y el agente lo rehízo. */
+  verified?: boolean;
 }
 
 export interface ThreadSummary {
@@ -87,7 +92,7 @@ export interface ThreadSummary {
 }
 
 export interface RawThreadMessage {
-  role: "user" | "assistant" | "tool" | "tool_call";
+  role: "user" | "assistant" | "tool" | "tool_call" | "summary";
   id?: string;
   content?: string;
   name?: string;
@@ -133,6 +138,8 @@ export type StreamEvent =
   | { type: "tool_start"; id: string; name: string; args: Record<string, unknown> }
   | { type: "tool_end"; id: string; name: string; latency_ms: number; status: string; artifact: ToolRun["artifact"] }
   | { type: "token"; text: string }
+  | { type: "summary" }
+  | { type: "verificacion" }
   | { type: "error"; message: string }
   | {
       type: "final";
@@ -143,4 +150,6 @@ export type StreamEvent =
       blindaje: ShieldFinding[];
       latency_ms: number;
       error: string | null;
+      resumen?: boolean;
+      verificacion?: boolean;
     };
