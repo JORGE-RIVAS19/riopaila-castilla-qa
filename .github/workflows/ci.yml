@@ -6,8 +6,8 @@ on:
   pull_request:
 
 jobs:
-  calidad:
-    name: Ruff + pytest
+  backend:
+    name: Backend · Ruff + pytest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,3 +22,23 @@ jobs:
         run: uv run ruff format --check .
       - name: Pruebas (pytest, sin red ni LLM)
         run: uv run pytest
+
+  frontend:
+    name: Frontend · tipos + Vitest + build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm run build
