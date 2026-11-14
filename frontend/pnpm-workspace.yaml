@@ -1,0 +1,3 @@
+# Política de cadena de suministro: no instalar versiones publicadas hace menos de 14 días.
+# pnpm 12 ya rechaza versiones muy recientes por defecto; esto fija la regla también para pnpm 10 (CI).
+minimumReleaseAge: 20160
