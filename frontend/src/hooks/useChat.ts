@@ -119,6 +119,10 @@ export function useChat({ threadId, userId, onThreadCreated, onTurnFinished }: O
         case "summary":
           patchLast((m) => ({ ...m, summarized: true }));
           break;
+        case "verificacion":
+          // el borrador traía cifras que no salieron de una herramienta: se borra y llega la versión corregida
+          patchLast((m) => ({ ...m, content: "", verified: true }));
+          break;
         case "token":
           patchLast((m) => ({ ...m, content: m.content + ev.text }));
           break;
