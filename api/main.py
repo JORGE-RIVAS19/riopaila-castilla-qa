@@ -13,8 +13,9 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
@@ -27,6 +28,7 @@ from api.schemas import (
     MemoryFact,
     MemoryFactIn,
     RouteRequest,
+    SearchRequest,
     ThreadDetail,
     ThreadSummary,
 )
@@ -172,3 +174,39 @@ def put_memory(user_id: str, body: MemoryFactIn, request: Request) -> MemoryFact
 def delete_memory(user_id: str, key: str, request: Request) -> dict:
     memory.delete_fact(agent(request).store, memory.normalize_user_id(user_id), key)
     return {"borrado": key}
+
+
+# ---- datos y RAG ------------------------------------------------------------------------
+
+
+@app.get("/api/datos/indicadores", tags=["datos"])
+def indicadores(request: Request) -> list[dict]:
+    """Filas del CSV de indicadores (lo mismo que consulta la herramienta)."""
+    return [r.model_dump() | {"valor_legible": r.valor_legible} for r in agent(request).indicadores]
+
+
+@app.post("/api/rag/search", tags=["rag"])
+def rag_search(body: SearchRequest, request: Request) -> dict:
+    """Búsqueda directa en el índice (densa, léxica o híbrida) para inspeccionar el top-k."""
+    svc = agent(request)
+    if svc.retriever is None:
+        raise HTTPException(503, "Índice no disponible: ejecuta `uv run python scripts/build_index.py`.")
+    res = svc.retriever.search(
+        body.consulta, k=body.k, mode=body.modo, seccion=body.seccion, tipo=body.tipo, anio=body.anio
+    )
+    return {
+        "consulta": res.query,
+        "modo": res.mode,
+        "latency_ms": round(res.latency_ms, 1),
+        "filtros": res.filters,
+        "hits": [h.as_dict() for h in res.hits],
+    }
+
+
+@app.get("/api/eval/retrieval", tags=["rag"])
+def retrieval_eval() -> dict:
+    """Último resultado de ``scripts/eval_retrieval.py`` (recall@10 y nDCG@10)."""
+    path = EVAL_DIR / "retrieval_latest.json"
+    if not path.exists():
+        raise HTTPException(404, "Aún no hay evaluación: ejecuta `uv run python scripts/eval_retrieval.py`.")
+    return json.loads(Path(path).read_text(encoding="utf-8"))
