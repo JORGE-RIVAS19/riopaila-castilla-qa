@@ -1,13 +1,28 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Layout } from "./components/Layout";
+import { SessionProvider } from "./hooks/session";
+import { ChatPage } from "./pages/ChatPage";
+import { DataPage } from "./pages/DataPage";
+import { MemoryPage } from "./pages/MemoryPage";
 import "./styles.css";
 
-// Esqueleto del frontend propio: las vistas del agente llegan en los siguientes PRs.
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <main className="page">
-      <h1>🌾 Riopaila Castilla · Agente conversacional</h1>
-      <p className="muted">Frontend React + Vite desacoplado del backend FastAPI (Módulo 2 · Grupo 3).</p>
-    </main>
+    <SessionProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Navigate to="/chat" replace />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/chat/:threadId" element={<ChatPage />} />
+            <Route path="/memoria" element={<MemoryPage />} />
+            <Route path="/datos" element={<DataPage />} />
+            <Route path="*" element={<Navigate to="/chat" replace />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </SessionProvider>
   </StrictMode>,
 );
