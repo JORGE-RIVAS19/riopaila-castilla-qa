@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "../types";
 import { RouteBadge } from "./RouteBadge";
 import { ShieldAlert } from "./Sources";
+import { ThinkingSteps } from "./ThinkingSteps";
 
 interface Props {
   message: ChatMessage;
@@ -38,7 +39,6 @@ export function MessageBubble({ message: m, selected, onSelect, onRetry }: Props
       <div className="bubble" onClick={onSelect} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onSelect()}>
         <div className="bubble-meta">
           {m.ruta && <RouteBadge ruta={m.ruta} compact />}
-          {toolsUsed > 0 && <span className="muted small">🛠️ {toolsUsed} herramienta(s)</span>}
           {(m.sources ?? []).length > 0 && <span className="muted small">📎 {(m.sources ?? []).length} fuentes</span>}
           {m.summarized && (
             <span className="muted small" title="La conversación superó el umbral de tokens y se resumió">
@@ -53,16 +53,13 @@ export function MessageBubble({ message: m, selected, onSelect, onRetry }: Props
               🔢 cifras verificadas
             </span>
           )}
-          {m.latency_ms !== undefined && <span className="muted small">⏱️ {(m.latency_ms / 1000).toFixed(1)} s</span>}
+          {m.latency_ms !== undefined && toolsUsed === 0 && (
+            <span className="muted small">⏱️ {(m.latency_ms / 1000).toFixed(1)} s</span>
+          )}
         </div>
-        {m.pending && !m.content && (
-          <div className="typing">
-            {m.ruta ? "Pensando" : "Decidiendo la ruta"}
-            <span className="dots" />
-          </div>
-        )}
+        <ThinkingSteps message={m} />
         {m.content && (
-          <div className="markdown">
+          <div className={`markdown ${m.pending ? "streaming" : ""}`}>
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
           </div>
         )}
