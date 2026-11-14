@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "../types";
 import { RouteBadge } from "./RouteBadge";
 import { ShieldAlert } from "./Sources";
+import { INTERRUMPIDA } from "../hooks/useChat";
 import { DataChart } from "./DataChart";
 import { ThinkingSteps } from "./ThinkingSteps";
 
@@ -67,8 +68,8 @@ export function MessageBubble({ message: m, selected, onSelect, onRetry }: Props
         {!m.pending && <DataChart message={m} />}
         <ShieldAlert findings={m.shield ?? []} />
         {m.error && (
-          <div className="inline-error">
-            ⚠️ {m.error}
+          <div className={m.error === INTERRUMPIDA ? "inline-error warn" : "inline-error"}>
+            {m.error === INTERRUMPIDA ? "⏸️" : "⚠️"} {m.error}
             {onRetry && (
               <button className="btn small" onClick={onRetry}>
                 Reintentar

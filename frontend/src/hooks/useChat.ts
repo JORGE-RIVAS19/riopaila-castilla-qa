@@ -35,6 +35,21 @@ export function fromThread(raw: RawThreadMessage[]): ChatMessage[] {
       tools = [];
     }
   }
+  return marcarInterrumpidos(out);
+}
+
+export const INTERRUMPIDA =
+  "Esta respuesta se interrumpió: la página se recargó o se cerró mientras el agente respondía.";
+
+/** Una pregunta sin respuesta en el checkpoint = turno cortado (p. ej. F5 a mitad del streaming). */
+function marcarInterrumpidos(ms: ChatMessage[]): ChatMessage[] {
+  const out: ChatMessage[] = [];
+  ms.forEach((m, i) => {
+    out.push(m);
+    const siguiente = ms[i + 1];
+    if (m.role === "user" && (!siguiente || siguiente.role === "user"))
+      out.push({ id: `${m.id}-interrumpida`, role: "assistant", content: "", error: INTERRUMPIDA, tools: [], sources: [], shield: [] });
+  });
   return out;
 }
 
@@ -79,6 +94,17 @@ export function useChat({ threadId, userId, onThreadCreated, onTurnFinished }: O
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Recargar o cerrar la pestaña corta el streaming y el turno queda sin respuesta: se avisa antes.
+  useEffect(() => {
+    if (!sending) return;
+    const avisar = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", avisar);
+    return () => window.removeEventListener("beforeunload", avisar);
+  }, [sending]);
 
   const patchLast = (fn: (m: ChatMessage) => ChatMessage) =>
     setMessages((ms) => (ms.length ? [...ms.slice(0, -1), fn(ms[ms.length - 1])] : ms));
@@ -176,10 +202,12 @@ export function useChat({ threadId, userId, onThreadCreated, onTurnFinished }: O
 
   const cancel = useCallback(() => abortRef.current?.abort(), []);
   const retry = useCallback(() => {
-    if (!lastPrompt.current) return;
+    // tras recargar la página no hay lastPrompt: se reintenta la última pregunta del hilo
+    const prompt = lastPrompt.current || [...messages].reverse().find((m) => m.role === "user")?.content;
+    if (!prompt) return;
     setMessages((ms) => ms.slice(0, -2));
-    void send(lastPrompt.current);
-  }, [send]);
+    void send(prompt);
+  }, [send, messages]);
 
   return { messages, loading, sending, error, send, cancel, retry, reload: load };
 }
