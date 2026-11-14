@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { NavLink, Outlet, useMatch, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
+import { usePanel } from "../hooks/panels";
 import { useSession } from "../hooks/session";
 import type { ThreadSummary } from "../types";
 
@@ -70,6 +71,7 @@ export function Layout() {
   const threadId = useMatch("/chat/:threadId")?.params.threadId;
   const navigate = useNavigate();
   const [menu, setMenu] = useState(false);
+  const [barra, alternarBarra] = usePanel("barra", true);
 
   const remove = async (id: string) => {
     if (!window.confirm("¿Borrar este hilo y su checkpoint?")) return;
@@ -79,10 +81,19 @@ export function Layout() {
   };
 
   return (
-    <div className={`app ${menu ? "menu-open" : ""}`}>
+    <div className={`app ${menu ? "menu-open" : ""} ${barra ? "" : "sidebar-collapsed"}`}>
       <header className="topbar">
         <button className="btn icon only-mobile" onClick={() => setMenu(!menu)} aria-label="Abrir menú">
           ☰
+        </button>
+        <button
+          className="btn icon panel-toggle only-desktop"
+          onClick={alternarBarra}
+          aria-label={barra ? "Ocultar la barra lateral" : "Mostrar la barra lateral"}
+          aria-expanded={barra}
+          title={barra ? "Ocultar la barra lateral" : "Mostrar la barra lateral"}
+        >
+          {barra ? "«" : "☰"}
         </button>
         <div className="brand">
           <img src="/favicon.svg" alt="" width={28} height={28} />
@@ -94,8 +105,8 @@ export function Layout() {
         <StatusPill />
       </header>
       <aside className="sidebar" onClick={(e) => (e.target as HTMLElement).closest("a") && setMenu(false)}>
-        <button className="btn primary wide" onClick={() => navigate("/chat")}>
-          ＋ Nueva conversación
+        <button className="btn primary wide new-chat" onClick={() => navigate("/chat")} title="Nueva conversación">
+          ＋<span className="label"> Nueva conversación</span>
         </button>
         <UserSwitcher />
         <nav className="threads" aria-label="Hilos">
@@ -129,11 +140,26 @@ export function Layout() {
           ))}
         </nav>
         <nav className="pages" aria-label="Secciones">
-          <NavLink to="/chat">💬 Chat</NavLink>
-          <NavLink to="/memoria">🧠 Memoria</NavLink>
-          <NavLink to="/datos">📊 Datos (CSV)</NavLink>
-          <NavLink to="/evaluacion">🎯 Evaluación RAG</NavLink>
-          <NavLink to="/arquitectura">🧩 Arquitectura</NavLink>
+          <NavLink to="/chat" title="Chat">
+            <span aria-hidden>💬</span>
+            <span className="label"> Chat</span>
+          </NavLink>
+          <NavLink to="/memoria" title="Memoria">
+            <span aria-hidden>🧠</span>
+            <span className="label"> Memoria</span>
+          </NavLink>
+          <NavLink to="/datos" title="Datos (CSV)">
+            <span aria-hidden>📊</span>
+            <span className="label"> Datos (CSV)</span>
+          </NavLink>
+          <NavLink to="/evaluacion" title="Evaluación RAG">
+            <span aria-hidden>🎯</span>
+            <span className="label"> Evaluación RAG</span>
+          </NavLink>
+          <NavLink to="/arquitectura" title="Arquitectura">
+            <span aria-hidden>🧩</span>
+            <span className="label"> Arquitectura</span>
+          </NavLink>
         </nav>
       </aside>
       <main className="content">
