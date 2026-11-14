@@ -1,196 +1,206 @@
 <div align="center">
 
-# 🌾 Riopaila Castilla · Base de Conocimiento Semántico y Sistema Q&A
+# 🌾 Riopaila Castilla · Agente conversacional con memoria, RAG y router
 
-**Módulo 1 del asistente corporativo · Técnicas Avanzadas de IA aplicadas en Modelos de Lenguaje (TAAML)**
+**Módulo 2 del asistente corporativo** · Técnicas Avanzadas de IA aplicadas en Modelos de Lenguaje (TAAML)
 Maestría en Inteligencia Artificial y Ciencias de Datos · Universidad Autónoma de Occidente · 2026-2S · **Grupo 3**
 
-[![CI](https://github.com/JORGE-RIVAS19/riopaila-castilla-qa/actions/workflows/ci.yml/badge.svg)](https://github.com/JORGE-RIVAS19/riopaila-castilla-qa/actions/workflows/ci.yml)
+![CI](https://github.com/JORGE-RIVAS19/riopaila-castilla-qa/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)
-[![uv](https://img.shields.io/badge/entorno-uv-DE5FE9?logo=uv&logoColor=white)](https://docs.astral.sh/uv/)
-![LangChain](https://img.shields.io/badge/LangChain-LCEL-1C3C3C?logo=langchain)
-![Ollama](https://img.shields.io/badge/LLM-Ollama%20%7C%20Gemini%20%7C%20OpenAI-000000?logo=ollama)
-![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
-[![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-0f6b3a.svg)](LICENSE)
+![uv](https://img.shields.io/badge/entorno-uv-DE5FE9)
+![LangGraph](https://img.shields.io/badge/LangGraph-create__agent-1C3C3C)
+![Qdrant](https://img.shields.io/badge/vector%20DB-Qdrant-DC244C)
+![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/frontend-React%2019-61DAFB?logo=react&logoColor=black)
+![Licencia](https://img.shields.io/badge/licencia-MIT-green)
 
 </div>
 
----
-
 ## 📌 Problema
 
-**Necesidad de un canal de comunicación automatizado y preciso para Riopaila Castilla S.A.**
-
-Riopaila Castilla es un grupo agroindustrial del Valle del Cauca con públicos muy distintos: clientes de
-azúcares, mieles y mezclas; compradores de energía y alcohol carburante; proveedores y cultivadores de caña;
-comunidades; inversionistas y aspirantes a empleo. La información pública que necesitan está repartida en
-decenas de páginas y noticias del sitio oficial. Un chatbot que responda "de memoria" con un LLM genérico
-**inventa datos**; uno que no tenga el contenido de la empresa **no sirve**.
+Riopaila Castilla atiende públicos muy distintos (clientes de azúcar, mieles y alcohol; compradores de
+energía; proveedores y cultivadores de caña; comunidades; inversionistas). En el Módulo 1 construimos su
+base de conocimiento pública (173 documentos, 691 chunks) y un Q&A con citas. Faltaba un **asistente que
+converse**: que recuerde a quién atiende, que distinga cuándo buscar en documentos, cuándo consultar una
+cifra exacta y cuándo simplemente saludar, y que no se deje manipular por un documento contaminado.
 
 ## 💡 Solución
 
-**Un sistema Q&A con el conocimiento público de la empresa como núcleo de un futuro chatbot (RAG).**
+Un **agente conversacional** con frontend propio (React) desacoplado de un backend FastAPI que ejecuta un
+grafo **LangGraph**:
 
-1. **Pipeline de scraping Medallion** (Bronze → Silver → Gold) reproducible con `uv run`, que respeta
-   `robots.txt`, usa el `wp-sitemap.xml`, se identifica con User-Agent, aplica timeout y rate limit.
-2. **Corpus Gold**: un Markdown por página con frontmatter (URL, título, sección, fecha de captura, hash,
-   tokens), `corpus.jsonl`, `chunks.jsonl` y una base consolidada `knowledge_base.md`.
-3. **Prompt de sistema** que consolida el conocimiento, con estructura sándwich, delimitación XML,
-   citas obligatorias `[n]` verificadas en código, abstención explícita y defensa contra inyección.
-4. **Tres tareas con LangChain**: **Resumen** ejecutivo, **FAQ** con salida estructurada (Pydantic) y **Q&A**.
-5. **Dashboard en Streamlit** que muestra el scraping por etapas, las métricas del corpus y el Q&A con fuentes.
-6. **Batería de 24 pruebas** (alcance, fuera de alcance e inyección) con métricas automáticas.
+| Capacidad | Cómo | Dónde |
+|---|---|---|
+| Memoria de corto plazo | `SqliteSaver` + `thread_id` (sobrevive al reinicio) | `agent/memory.py` |
+| Memoria de largo plazo | `SqliteStore`, namespace `("usuarios", id, "perfil")`, `store.search()` | `agent/memory.py`, `agent/tools.py` |
+| Contexto multi-turno | `SummarizationMiddleware` (agente) + `trim_messages` (ruta directa) | `agent/graph.py` |
+| RAG documental | Qdrant (colecciones + payload + filtros + alias blue/green) + BM25, fusión **RRF** | `rag/` |
+| Datos estructurados | `@tool` sobre un CSV de 36 cifras públicas con **esquema Pydantic**; la aritmética la hace Python | `structured.py` |
+| Router | Gatekeeper estilo System One: reglas (Noul/Choice) → LLM con salida estructurada si hay duda | `agent/router.py` |
+| Blindaje del RAG | Contexto en XML como **datos pasivos** + detector de instrucciones ocultas | `rag/shield.py` |
+| Observabilidad | LangSmith (`LANGSMITH_*`) + traza JSONL por turno en `logs/trazas.jsonl` | `agent/service.py` |
+| Interfaz | React 19 + Vite: streaming SSE, hilos, router visible, fuentes, errores, *time travel* | `frontend/` |
 
 ## 🏗️ Arquitectura
 
 ```mermaid
 flowchart LR
-    W["🌐 riopaila-castilla.com<br/>robots.txt · wp-sitemap.xml"] -->|descubrir| B
-    subgraph Pipeline["scripts/scrape_empresa.py"]
-        B["🥉 Bronze · data/raw<br/>HTML crudo + captures.jsonl"] -->|limpiar| S["🥈 Silver · data/processed<br/>Markdown limpio"]
-        S -->|deduplicar + enriquecer| G["🥇 Gold · data/gold<br/>.md + frontmatter · corpus.jsonl · chunks.jsonl"]
-    end
-    G --> C{"Contexto del prompt<br/>completo · BM25"}
-    C --> L["🦜 LangChain LCEL<br/>Ollama Llama 3.2 · Gemini · OpenAI"]
-    L --> V["✅ Validación en código<br/>citas · abstención · Pydantic"]
-    V --> U["🖥️ Streamlit<br/>Resumen · FAQ · Q&A"]
+  U([Usuario]) --> FE["Frontend React<br/>Vite + TypeScript"]
+  FE -- "HTTP + SSE /api/chat/stream" --> API["FastAPI<br/>api/main.py"]
+  API --> G{{"LangGraph<br/>router → directo | agente"}}
+  G --> R["Router<br/>reglas + LLM (Pydantic)"]
+  G --> A["create_agent<br/>@tool + middleware"]
+  A --> T1[buscar_documentos] --> Q[("Qdrant + BM25<br/>RRF")]
+  A --> T2[consultar_indicadores] --> CSV[("CSV indicadores<br/>36 cifras con fuente")]
+  A --> T3[comparar_cifras]
+  A --> T4[recordar_dato_usuario] --> ST[("SqliteStore<br/>largo plazo")]
+  G <--> CP[("SqliteSaver<br/>checkpointer")]
+  G -. trazas .-> LS["LangSmith<br/>logs/trazas.jsonl"]
+  M1["Corpus Gold del M1<br/>data/gold/chunks.jsonl"] -- "scripts/build_index.py<br/>(offline)" --> Q
 ```
 
-| Decisión | Elección | Por qué |
+### Grafo del agente
+
+```mermaid
+flowchart TD
+  S([START]) --> RT[router<br/>Noul/Choice por reglas · LLM si la confianza es menor a 0.7]
+  RT -- "directo<br/>saludo · pregunta sobre el usuario" --> D[directo<br/>trim_messages + perfil del Store<br/>sin herramientas]
+  RT -- "memoria · rag · datos · mixto" --> AG
+  subgraph AG [agente · create_agent]
+    MW1[dynamic_prompt<br/>perfil + decisión del router] --> MW2[wrap_model_call<br/>herramientas por ruta]
+    MW2 --> MW3[SummarizationMiddleware<br/>6 000 tokens → resumen + 8 msj]
+    MW3 --> LLM((model)) <--> TL[tools]
+  end
+  D --> E([END])
+  AG --> E
+```
+
+| Ruta | Herramientas habilitadas | Ejemplo |
 |---|---|---|
-| LLM (Módulo 1) | **Gemini 3.6 Flash** por API para la demo y la evaluación · **Llama 3.2 3B en Ollama** como opción local | En la prueba real, el modelo local tardó 80–125 s por respuesta en CPU y no siguió las reglas; Gemini responde en 3–10 s. Se cambia desde `.env` o la barra lateral |
-| Framework | **LangChain (LCEL)** | Plantillas `ChatPromptTemplate`, `with_structured_output` y cambio de proveedor sin tocar el código |
-| Muestreo | **T = 0.0 · top_p = 0.1** (Q&A, FAQ) · T = 0.3 · top_p = 0.9 (resumen) | Régimen Q1 para hechos y JSON; Q2 para resúmenes (Clase 4). Gemini 3.x usa muestreo fijo |
-| Resultado | **95,8 %** de éxito en 24 preguntas (v3), 100 % de citas válidas, abstención y rechazo de inyección | Ver `docs/INFORME.md` y `prompts/README.md` |
-| Contexto | **Corpus completo** si cabe; si no, **BM25** + reordenamiento en U | *Lost in the Middle* (Liu et al., 2023) y límite de `num_ctx` del modelo local |
-| Chunking | `RecursiveCharacterTextSplitter` 1 200 chars / 150 de solape, cortando primero por `##` | Fragmentos autocontenidos listos para embeddings |
-| Módulo 2 | `nomic-embed-text-v2-moe` (Ollama) + **ChromaDB** | Embeddings abiertos sin costo de API sobre `chunks.jsonl` |
+| `directo` | ninguna | «Hola», «¿Dónde trabajo?» |
+| `memoria` | `recordar_dato_usuario` | «Me llamo Ana y trabajo en Carvajal» |
+| `rag` | `buscar_documentos`, `recordar_dato_usuario` | «¿Qué es el proyecto de azúcar orgánica de RioCas?» |
+| `datos` | `consultar_indicadores`, `comparar_cifras` | «¿Cuánto vendió en energía al tercer trimestre de 2023?» |
+| `mixto` | las tres de datos y documentos | «Compara la meta de alcohol del documento con lo producido» |
 
-## 🔄 Data Processing Workflow
+### Checkpointer vs. Store
 
-The knowledge base is generated through a reproducible five-stage pipeline that transforms raw website content into structured documents ready for language model consumption.
+```mermaid
+flowchart LR
+  subgraph corto [Corto plazo · por hilo]
+    T1[thread_id A] --> CP[(checkpoints.sqlite)]
+    T2[thread_id B] --> CP
+  end
+  subgraph largo [Largo plazo · por usuario]
+    NS["('usuarios','ana','perfil')"] --> ST[(store.sqlite)]
+  end
+  T1 -. recordar_dato_usuario .-> NS
+  NS -. "store.search() en dynamic_prompt" .-> T2
+```
 
-### Pipeline Stages
+El **checkpointer** guarda el estado completo de cada hilo (mensajes, decisiones del router) y permite
+reanudarlo tras reiniciar el backend y hacer *time travel* (`/api/threads/{id}/checkpoints` y `/fork`).
+El **Store** guarda hechos del usuario que cruzan hilos: lo que se dice en el hilo A se recupera en el B.
 
-| Stage | Component | Description | Output |
-|---|---|---|---|
-| 1. Discovery | `discovery.py` | Reads `robots.txt` and the WordPress sitemap to identify accessible URLs. | `discovery.json` |
-| 2. Extraction | `fetcher.py`, `bronze.py` | Downloads HTML content while respecting rate limits, timeouts, and website restrictions. | `data/raw/` |
-| 3. Cleaning | `silver.py` | Extracts relevant content and converts HTML into Markdown using Trafilatura and BeautifulSoup. | `data/processed/` |
-| 4. Deduplication | `dedup.py` | Removes exact duplicates, repeated website elements, short documents, and near-duplicates. | Clean document collection |
-| 5. Enrichment | `gold.py`, `chunking.py` | Generates metadata, structured documents, and overlapping text chunks. | `data/gold/` |
+## 📏 Evaluación del retrieval
 
-### Data Quality and Traceability
+28 consultas etiquetadas (`data/eval/retrieval_queries.jsonl`), relevancia binaria por documento,
+comparación **densa vs. léxica vs. híbrida** con recall@10, nDCG@10 y MRR:
 
-Each Gold document includes metadata such as:
+```bash
+uv run python scripts/eval_retrieval.py      # → docs/evaluacion/retrieval_latest.md / .json
+```
 
-- Source URL and document title.
-- Content classification and document type.
-- Capture date and publication date, when available.
-- SHA-256 hash for content identification.
-- Token count for context management.
-
-The pipeline generates 691 chunks using a chunk size of 1,200 characters and an overlap of 150 characters.
-
-### Reproducibility
-
-The pipeline supports offline processing through:
-
-`uv run python scripts/scrape_empresa.py --offline`
-
-This allows Silver and Gold layers to be regenerated from previously captured Bronze data without making additional requests to the company website.
-
-This separation between extraction and transformation improves reproducibility, reduces unnecessary requests, and preserves the original source data for future processing.
+Los resultados vigentes están en [`docs/evaluacion/retrieval_latest.md`](docs/evaluacion/retrieval_latest.md)
+y se ven en la app (pestaña **Evaluación RAG**). Detalle de diseño y decisiones en
+[`docs/INFORME_M2.md`](docs/INFORME_M2.md).
 
 ## ⚙️ Instalación
 
-Requisitos: [uv](https://docs.astral.sh/uv/) · [Ollama](https://ollama.com) · Git. (uv descarga Python 3.13 solo.)
+Requisitos: [uv](https://docs.astral.sh/uv/), [Node.js 22 LTS](https://nodejs.org) con `pnpm`
+(`npm install -g pnpm`), [Ollama](https://ollama.com) para los embeddings y una API key de Gemini.
 
 ```bash
 git clone https://github.com/JORGE-RIVAS19/riopaila-castilla-qa.git
 cd riopaila-castilla-qa
-uv sync                         # crea .venv con las versiones exactas de uv.lock
-cp .env.example .env            # en Windows: copy .env.example .env
-ollama pull llama3.2:3b         # modelo local por defecto
+uv sync                                   # backend: versiones exactas de uv.lock
+cp .env.example .env                      # Windows: copy .env.example .env  → poner GOOGLE_API_KEY
+ollama pull nomic-embed-text-v2-moe       # embeddings locales (768 dims)
+uv run python scripts/build_index.py      # indexación offline en Qdrant (data/qdrant)
+cd frontend && pnpm install && cd ..
 ```
 
 ## ▶️ Uso
 
 ```bash
-# 1. Pipeline completo en línea (≈ 1 s por página por cortesía con el servidor)
-uv run python scripts/scrape_empresa.py
+# Terminal 1 · backend del agente (docs interactivas en http://127.0.0.1:8000/docs)
+uv run fastapi dev api/main.py
 
-# Variantes
-uv run python scripts/scrape_empresa.py --offline              # regenera Silver/Gold desde Bronze, sin red
-uv run python scripts/scrape_empresa.py --refresh --max-pages 5 # demo: vuelve a descargar 5 páginas
+# Terminal 2 · frontend propio (http://localhost:5173)
+cd frontend && pnpm dev
 
-# 2. Dashboard
-uv run streamlit run app.py
-
-# 3. Batería de 24 preguntas (y comparación de versiones de prompt)
-uv run python scripts/run_eval.py
-uv run python scripts/run_eval.py --prompt qa_v1_zero_shot
-
-# 4. Laboratorio Clase 4: JSONL verificable con Pydantic y T = 0
-uv run python scripts/extract_structured.py
-
-# Calidad
-uv run ruff check . && uv run pytest
+# Utilidades
+uv run python scripts/eval_retrieval.py   # recall@10 / nDCG@10
+uv run python scripts/build_index.py --rollback   # blue/green: volver a la colección anterior
+uv run ruff check . && uv run pytest      # calidad backend (sin red ni LLM)
+cd frontend && pnpm test && pnpm build    # calidad frontend
 ```
 
-Para usar una API en lugar de Ollama: en `.env` pon `LLM_PROVIDER=gemini` y `GOOGLE_API_KEY=...`
-(o `openai` y `OPENAI_API_KEY`), o cámbialo en la barra lateral de la app.
+El pipeline de scraping del Módulo 1 sigue disponible: `uv run python scripts/scrape_empresa.py`.
+
+## 🔌 API
+
+| Método | Ruta | Para qué |
+|---|---|---|
+| `POST` | `/api/chat/stream` | Turno con streaming SSE: `start · route · tool_start · tool_end · token · error · final` |
+| `POST` | `/api/chat` | Turno sin streaming |
+| `POST` | `/api/route` | Decisión del router por reglas (depuración) |
+| `GET` | `/api/threads?user_id=` | Hilos del usuario |
+| `GET` / `DELETE` | `/api/threads/{id}` | Mensajes del hilo desde el checkpointer / borrar |
+| `GET` / `POST` | `/api/threads/{id}/checkpoints` · `/fork` | *Time travel* |
+| `GET` / `PUT` / `DELETE` | `/api/users/{id}/memory` | Perfil del Store |
+| `GET` | `/api/datos/indicadores` | Filas del CSV |
+| `POST` | `/api/rag/search` | Top-k denso, léxico o híbrido con filtros |
+| `GET` | `/api/eval/retrieval` · `/api/health` · `/api/graph` | Evaluación, estado y diagrama del grafo |
 
 ## 📁 Estructura
 
-```text
+```
 riopaila-castilla-qa/
-├── app.py                         # Dashboard Streamlit (contexto, pipeline, Q&A, resumen, FAQ, evaluación, corpus)
-├── scripts/
-│   ├── scrape_empresa.py          # CLI del pipeline Medallion
-│   ├── run_eval.py                # batería de 24 preguntas → data/eval + docs/evaluacion
-│   └── extract_structured.py      # ficha estructurada con Pydantic (Clase 4)
+├── api/                      # FastAPI: main.py (endpoints + SSE) · schemas.py (contratos Pydantic)
+├── frontend/                 # React 19 + Vite + TS: páginas, componentes, cliente SSE, Vitest
 ├── src/riopaila_qa/
-│   ├── config.py                  # configuración por .env
-│   ├── scraping/                  # discovery · fetcher · bronze · silver · dedup · gold · chunking · pipeline
-│   ├── corpus.py                  # carga Gold, BM25 y armado del contexto
-│   ├── llm.py                     # fábrica de modelos LangChain + calibración de muestreo
-│   ├── prompts.py                 # carga de prompts versionados
-│   ├── tasks.py                   # Q&A, Resumen y FAQ (LCEL + validación)
-│   └── evaluation.py              # métricas automáticas de la batería
-├── prompts/                       # prompts versionados (v1 → v3) y bitácora de experimentos
+│   ├── agent/                # settings · embeddings · memory · router · tools · graph · service · fakes
+│   ├── rag/                  # documents (limpieza) · index (Qdrant) · retriever (RRF) · shield
+│   ├── structured.py         # CSV de indicadores + consultas deterministas (Pydantic)
+│   ├── scraping/ corpus.py … # Módulo 1: pipeline Medallion y BM25
+├── prompts/agente_v1.md      # prompt de sistema del agente (versionado)
 ├── data/
-│   ├── raw/                       # 🥉 Bronze (no versionado, se regenera)
-│   ├── processed/                 # 🥈 Silver (no versionado, se regenera)
-│   ├── gold/                      # 🥇 Gold: base de conocimiento entregable
-│   └── eval/                      # preguntas de prueba y resultados
-├── docs/                          # informe, guion de sustentación, uso de IA, ADR
-├── openspec/                      # especificaciones (SDD)
-├── skills/wordpress-corpus-medallion/SKILL.md
-├── tests/                         # pytest con sitio WordPress simulado y LLM falso
-├── AGENTS.md                      # reglas para agentes de código (OpenCode / GGA)
-├── pyproject.toml · uv.lock · .python-version
-└── LICENSE                        # MIT
+│   ├── gold/                 # corpus del M1 (entrada del índice)
+│   ├── structured/           # indicadores_riopaila.csv (cifras públicas con URL de origen)
+│   ├── adversarial/          # documento sintético para el caso 5 (blindaje)
+│   ├── eval/                 # 24 preguntas del M1 + 28 consultas etiquetadas del retrieval
+│   ├── qdrant/ memory/       # índice y memoria locales (no se versionan)
+├── scripts/                  # build_index · eval_retrieval · scrape_empresa · run_eval
+├── tests/                    # pytest: datos, router, blindaje, RAG, memoria, grafo y API
+├── docs/                     # INFORME_M2 · GUION_M2 · ADRs · evaluación
+└── openspec/                 # especificaciones (SDD) del M1 y del M2
 ```
 
-## 🖼️ Capturas
+## 🔒 Ética, seguridad y datos
 
-| Pipeline por etapas | Q&A con fuentes |
-|---|---|
-| ![Pipeline](docs/img/pipeline.png) | ![Q&A](docs/img/qa.png) |
-
-## 🔒 Ética y datos
-
-- Solo contenido público; se respeta `robots.txt` (`/wp-admin/` no se toca) y se omite el sitemap de
-  **usuarios** de WordPress (datos personales, Ley 1581 de 2012 — Habeas Data).
-- User-Agent identificable, 1 s entre peticiones, timeout de 15 s y reintentos con espera exponencial.
-- Las capas Bronze y Silver no se versionan; el `.env` y las API keys nunca entran al repositorio.
+- El corpus es solo contenido público (M1: robots.txt, sin sitemap de usuarios, Ley 1581).
+- El CSV usa **solo cifras publicadas por la empresa** en sus noticias, cada fila con su URL.
+- El documento de `data/adversarial/` es **sintético** y está marcado `origen=sintetico`: existe solo
+  para demostrar el blindaje; la app lo señala como “documento de prueba”.
+- `.env`, API keys, `data/qdrant/`, `data/memory/` y `logs/` nunca entran al repositorio.
 
 ## 📚 Documentación
 
-- [Informe técnico](docs/INFORME.md) · [Experimentos de prompts](prompts/README.md) ·
-  [Guion de la sustentación](docs/GUION_SUSTENTACION.md) · [Uso de IA](docs/USO_DE_IA.md) ·
-  [Especificaciones](openspec/) · [Decisiones (ADR)](docs/adr/)
+[Informe M2](docs/INFORME_M2.md) · [Guion de la sustentación M2](docs/GUION_M2.md) ·
+[ADRs](docs/adr/) · [Evaluación del retrieval](docs/evaluacion/retrieval_latest.md) ·
+[Especificación M2](openspec/changes/modulo2-agente/proposal.md) · [Informe M1](docs/INFORME.md) ·
+[Uso de IA](docs/USO_DE_IA.md)
 
 ## 👥 Créditos
 
@@ -198,11 +208,8 @@ riopaila-castilla-qa/
 - Waldor Drada Arango
 - Jorge Andrés Rivas Manzano
 
-Code Reviewer del Grupo 3: el profesor (asignado el día de la sustentación).
-Profesor: **Jan Polanco Velasco** · Universidad Autónoma de Occidente.
-Fuente de datos: sitio público de [Riopaila Castilla S.A.](https://www.riopaila-castilla.com) — el contenido
-pertenece a la empresa y se usa con fines académicos.
+Code Reviewer del Grupo 3: el profesor (revisión en vivo).
 
 ## 📄 Licencia
 
-Código bajo licencia [MIT](LICENSE) © 2026 Melissa Palacios Domínguez, Waldor Drada Arango y Jorge Andrés Rivas Manzano.
+[MIT](LICENSE) © 2026 Melissa Palacios Domínguez, Waldor Drada Arango y Jorge Andrés Rivas Manzano.

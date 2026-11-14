@@ -13,3 +13,13 @@ Reglas que seguimos:
   dependencias están fijadas con hash en `uv.lock`.
 - Los datos del corpus salen solo del pipeline; nada se copió a mano ni lo generó un modelo.
 - Cada integrante debe poder explicar cualquier archivo del repositorio sin leer el README.
+
+## Módulo 2
+
+- Se usó un asistente de código (Claude) para el andamiaje del backend (grafo, herramientas, API), del frontend
+  React y de las pruebas. Cada pieza se verificó con pytest/Vitest, con un LLM simulado con *tool calling* y,
+  antes de la sustentación, con Gemini y los embeddings reales.
+- Las 36 cifras del CSV las extrajimos a mano de las noticias del corpus Gold y una prueba comprueba que cada URL
+  de origen existe en el corpus. Ningún modelo generó datos.
+- Las 28 consultas del set de retrieval y sus documentos relevantes las etiquetamos nosotros.
+- El documento de `data/adversarial/` es sintético a propósito (caso 5) y está marcado como tal en el índice y en la app.
