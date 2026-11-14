@@ -13,16 +13,26 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from api.schemas import (
     ChatRequest,
     ChatResponse,
+    Checkpoint,
+    ForkRequest,
+    ForkResponse,
+    MemoryFact,
+    MemoryFactIn,
     RouteRequest,
+    SearchRequest,
+    ThreadDetail,
+    ThreadSummary,
 )
+from riopaila_qa.agent import memory
 from riopaila_qa.agent.router import route_by_rules
 from riopaila_qa.agent.service import AgentService
 from riopaila_qa.agent.settings import get_agent_settings
@@ -109,3 +119,94 @@ def chat(body: ChatRequest, request: Request) -> ChatResponse:
 def preview_route(body: RouteRequest) -> dict:
     """Decisión del router por reglas, sin ejecutar el agente (para depurar el criterio 2.3)."""
     return route_by_rules(body.mensaje).model_dump()
+
+
+# ---- hilos (memoria de corto plazo) -----------------------------------------------
+
+
+@app.get("/api/threads", tags=["hilos"], response_model=list[ThreadSummary])
+def threads(request: Request, user_id: str = Query("invitado")) -> list[ThreadSummary]:
+    uid = memory.normalize_user_id(user_id)
+    return [ThreadSummary(**t) for t in memory.list_threads(agent(request).store, uid)]
+
+
+@app.get("/api/threads/{thread_id}", tags=["hilos"], response_model=ThreadDetail)
+def thread_detail(thread_id: str, request: Request, user_id: str = Query("invitado")) -> ThreadDetail:
+    """Mensajes del hilo leídos del checkpointer (sobreviven al reinicio del backend)."""
+    return ThreadDetail(**agent(request).thread_messages(thread_id, memory.normalize_user_id(user_id)))
+
+
+@app.delete("/api/threads/{thread_id}", tags=["hilos"])
+def delete_thread(thread_id: str, request: Request, user_id: str = Query("invitado")) -> dict:
+    svc = agent(request)
+    memory.forget_thread(svc.store, svc.checkpointer, memory.normalize_user_id(user_id), thread_id)
+    return {"borrado": thread_id}
+
+
+@app.get("/api/threads/{thread_id}/checkpoints", tags=["hilos"], response_model=list[Checkpoint])
+def checkpoints(thread_id: str, request: Request, user_id: str = Query("invitado")) -> list[Checkpoint]:
+    """*Time travel*: historial de checkpoints del hilo."""
+    return [Checkpoint(**c) for c in agent(request).checkpoints(thread_id, memory.normalize_user_id(user_id))]
+
+
+@app.post("/api/threads/{thread_id}/fork", tags=["hilos"], response_model=ForkResponse)
+def fork(thread_id: str, body: ForkRequest, request: Request) -> ForkResponse:
+    """*Time travel*: bifurca el hilo desde un checkpoint anterior."""
+    return ForkResponse(thread_id=agent(request).fork(thread_id, body.checkpoint_id, body.user_id))
+
+
+# ---- memoria de largo plazo (Store) ---------------------------------------------------
+
+
+@app.get("/api/users/{user_id}/memory", tags=["memoria"], response_model=list[MemoryFact])
+def get_memory(user_id: str, request: Request) -> list[MemoryFact]:
+    facts = memory.load_profile(agent(request).store, memory.normalize_user_id(user_id))
+    return [MemoryFact(**f) for f in facts]
+
+
+@app.put("/api/users/{user_id}/memory", tags=["memoria"], response_model=MemoryFact)
+def put_memory(user_id: str, body: MemoryFactIn, request: Request) -> MemoryFact:
+    item = memory.save_fact(agent(request).store, memory.normalize_user_id(user_id), body.clave, body.valor)
+    return MemoryFact(key=item["clave"], **item)
+
+
+@app.delete("/api/users/{user_id}/memory/{key}", tags=["memoria"])
+def delete_memory(user_id: str, key: str, request: Request) -> dict:
+    memory.delete_fact(agent(request).store, memory.normalize_user_id(user_id), key)
+    return {"borrado": key}
+
+
+# ---- datos y RAG ------------------------------------------------------------------------
+
+
+@app.get("/api/datos/indicadores", tags=["datos"])
+def indicadores(request: Request) -> list[dict]:
+    """Filas del CSV de indicadores (lo mismo que consulta la herramienta)."""
+    return [r.model_dump() | {"valor_legible": r.valor_legible} for r in agent(request).indicadores]
+
+
+@app.post("/api/rag/search", tags=["rag"])
+def rag_search(body: SearchRequest, request: Request) -> dict:
+    """Búsqueda directa en el índice (densa, léxica o híbrida) para inspeccionar el top-k."""
+    svc = agent(request)
+    if svc.retriever is None:
+        raise HTTPException(503, "Índice no disponible: ejecuta `uv run python scripts/build_index.py`.")
+    res = svc.retriever.search(
+        body.consulta, k=body.k, mode=body.modo, seccion=body.seccion, tipo=body.tipo, anio=body.anio
+    )
+    return {
+        "consulta": res.query,
+        "modo": res.mode,
+        "latency_ms": round(res.latency_ms, 1),
+        "filtros": res.filters,
+        "hits": [h.as_dict() for h in res.hits],
+    }
+
+
+@app.get("/api/eval/retrieval", tags=["rag"])
+def retrieval_eval() -> dict:
+    """Último resultado de ``scripts/eval_retrieval.py`` (recall@10 y nDCG@10)."""
+    path = EVAL_DIR / "retrieval_latest.json"
+    if not path.exists():
+        raise HTTPException(404, "Aún no hay evaluación: ejecuta `uv run python scripts/eval_retrieval.py`.")
+    return json.loads(Path(path).read_text(encoding="utf-8"))
