@@ -33,3 +33,4 @@ frontend/dist/
 data/qdrant/
 data/memory/
 logs/
+frontend/tsconfig.tsbuildinfo
