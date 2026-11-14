@@ -3,6 +3,8 @@ import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "../types";
 import { RouteBadge } from "./RouteBadge";
 import { ShieldAlert } from "./Sources";
+import { DataChart } from "./DataChart";
+import { ThinkingSteps } from "./ThinkingSteps";
 
 interface Props {
   message: ChatMessage;
@@ -12,6 +14,16 @@ interface Props {
 }
 
 export function MessageBubble({ message: m, selected, onSelect, onRetry }: Props) {
+  if (m.role === "summary") {
+    return (
+      <details className="msg summary-note">
+        <summary>🗜️ Resumen automático de los turnos anteriores (SummarizationMiddleware)</summary>
+        <div className="markdown">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+        </div>
+      </details>
+    );
+  }
   if (m.role === "user") {
     return (
       <div className="msg msg-user">
@@ -28,21 +40,31 @@ export function MessageBubble({ message: m, selected, onSelect, onRetry }: Props
       <div className="bubble" onClick={onSelect} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onSelect()}>
         <div className="bubble-meta">
           {m.ruta && <RouteBadge ruta={m.ruta} compact />}
-          {toolsUsed > 0 && <span className="muted small">🛠️ {toolsUsed} herramienta(s)</span>}
           {(m.sources ?? []).length > 0 && <span className="muted small">📎 {(m.sources ?? []).length} fuentes</span>}
-          {m.latency_ms !== undefined && <span className="muted small">⏱️ {(m.latency_ms / 1000).toFixed(1)} s</span>}
+          {m.summarized && (
+            <span className="muted small" title="La conversación superó el umbral de tokens y se resumió">
+              🗜️ historial resumido
+            </span>
+          )}
+          {m.verified && (
+            <span
+              className="muted small"
+              title="El borrador traía números que no salieron de una herramienta: el verificador lo descartó y el agente lo rehízo con comparar_cifras"
+            >
+              🔢 cifras verificadas
+            </span>
+          )}
+          {m.latency_ms !== undefined && toolsUsed === 0 && (
+            <span className="muted small">⏱️ {(m.latency_ms / 1000).toFixed(1)} s</span>
+          )}
         </div>
-        {m.pending && !m.content && (
-          <div className="typing">
-            {m.ruta ? "Pensando" : "Decidiendo la ruta"}
-            <span className="dots" />
-          </div>
-        )}
+        <ThinkingSteps message={m} />
         {m.content && (
-          <div className="markdown">
+          <div className={`markdown ${m.pending ? "streaming" : ""}`}>
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
           </div>
         )}
+        {!m.pending && <DataChart message={m} />}
         <ShieldAlert findings={m.shield ?? []} />
         {m.error && (
           <div className="inline-error">

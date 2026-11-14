@@ -50,3 +50,23 @@ def test_alias_blue_green_y_rollback(settings: AgentSettings):
     assert rag_index.index_info(settings)["coleccion"] != first
     assert rag_index.rollback(settings) == first
     assert rag_index.index_info(settings)["coleccion"] == first
+
+
+def test_carpeta_ocupada_da_un_mensaje_claro(tmp_path):
+    from dataclasses import replace
+
+    import pytest
+    from qdrant_client import QdrantClient
+
+    from riopaila_qa.agent.settings import AgentSettings
+    from riopaila_qa.rag import index as rag_index
+
+    settings = replace(AgentSettings(), qdrant_url="", qdrant_path=tmp_path / "q")
+    settings.qdrant_path.mkdir(parents=True)
+    otro = QdrantClient(path=str(settings.qdrant_path))  # simula el backend viejo que sigue vivo
+    try:
+        with pytest.raises(rag_index.QdrantOcupadoError, match="Stop-Process"):
+            rag_index.get_client(settings)
+    finally:
+        otro.close()
+        rag_index.close_clients()

@@ -83,3 +83,39 @@ def test_message_text_bloques_gemini():
 def test_errores_amigables():
     assert "429" in friendly_error(RuntimeError("429 RESOURCE_EXHAUSTED"))
     assert "Ollama" in friendly_error(ConnectionError("connect to localhost:11434 failed"))
+
+
+def test_resumen_no_rompe_el_hilo(settings: AgentSettings):
+    """Con un umbral bajo, SummarizationMiddleware compacta el historial: el hilo lo muestra como resumen."""
+    chunks, _ = load_corpus_chunks(Paths())
+    emb, dims, name = get_embeddings(settings)
+    rag_index.build_index(chunks, emb, dims, name, settings)
+    svc = AgentService(replace(settings, summary_trigger_tokens=300, summary_keep_messages=2), fake_llm=True)
+    try:
+        preguntas = [
+            "¿Qué dice el corpus sobre la política de calidad?",
+            "¿Cuál fue la utilidad neta de 2022?",
+            "¿Qué dice el corpus sobre la cogeneración de energía?",
+        ]
+        eventos = []
+        for p in preguntas:
+            eventos.append(list(svc.stream_turn(p, "largo", "ana")))
+        todos = [e for turno in eventos for e in turno]
+        assert any(e["type"] == "summary" for e in todos)
+        assert any(turno[-1]["resumen"] for turno in eventos)
+        # Las herramientas de turnos viejos no se re-emiten en el turno que resume.
+        for turno in eventos:
+            ids_start = [e["id"] for e in turno if e["type"] == "tool_start"]
+            assert len(ids_start) == len(set(ids_start)) <= 2
+
+        hilo = svc.thread_messages("largo", "ana")
+        roles = [m["role"] for m in hilo["messages"]]
+        assert "summary" in roles
+        resumen = next(m for m in hilo["messages"] if m["role"] == "summary")
+        assert not resumen["content"].startswith("Here is a summary")
+        usuarios = [m for m in hilo["messages"] if m["role"] == "user"]
+        assert usuarios[-1]["content"] == preguntas[-1]
+        ultima = [m for m in hilo["messages"] if m["role"] == "assistant"][-1]
+        assert ultima["ruta"]["ruta"] == "rag"
+    finally:
+        rag_index.close_clients()
