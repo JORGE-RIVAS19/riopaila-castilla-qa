@@ -28,6 +28,7 @@ from typing import Annotated, Any, NotRequired
 from langchain.agents import AgentState, create_agent
 from langchain.agents.middleware import (
     ModelCallLimitMiddleware,
+    ModelFallbackMiddleware,
     ModelRequest,
     ModelRetryMiddleware,
     SummarizationMiddleware,
@@ -46,10 +47,10 @@ from riopaila_qa.agent.numeros import cifras_sin_respaldo
 from riopaila_qa.agent.router import TOOLS_BY_ROUTE, RouteDecision, route
 from riopaila_qa.agent.settings import AgentSettings
 from riopaila_qa.agent.tools import AgentContext
-from riopaila_qa.config import ROOT_DIR
+from riopaila_qa.config import ROOT_DIR, _env
 from riopaila_qa.structured import Indicador, catalogo
 
-PROMPT_PATH = ROOT_DIR / "prompts" / "agente_v1.md"
+PROMPT_PATH = ROOT_DIR / "prompts" / _env("AGENT_PROMPT", "agente_v2_taller.md")
 MESES = [
     "enero",
     "febrero",
@@ -92,6 +93,7 @@ class AgentDeps:
     settings: AgentSettings
     router_model: BaseChatModel | None = None
     summary_model: BaseChatModel | None = None
+    fallback_model: BaseChatModel | None = None  # M3: modelo de respaldo si el primario falla (429/5xx)
 
 
 def load_agent_prompt() -> str:
@@ -133,12 +135,22 @@ def _fecha() -> str:
     return f"{d.day} de {MESES[d.month - 1]} de {d.year}"
 
 
-def render_system_prompt(template: str, decision: dict | None, profile: list[dict], user_id: str, cat: str) -> str:
+def render_system_prompt(
+    template: str,
+    decision: dict | None,
+    profile: list[dict],
+    user_id: str,
+    cat: str,
+    rol: str = "invitado",
+    canal: str = "web",
+) -> str:
     d = decision or {"ruta": "rag", "razon": "Sin decisión del router.", "cautela": False}
     tools = TOOLS_BY_ROUTE.get(d["ruta"], ())
     return (
         template.replace("{fecha}", _fecha())
         .replace("{usuario}", user_id)
+        .replace("{rol}", rol)
+        .replace("{canal}", canal)
         .replace("{perfil}", memory.profile_as_text(profile))
         .replace("{ruta}", d["ruta"])
         .replace("{razon}", d.get("razon", ""))
@@ -165,12 +177,18 @@ def build_graph(deps: AgentDeps, checkpointer=None, store=None):
             return [], ctx.user_id
         return memory.load_profile(runtime.store, ctx.user_id), ctx.user_id
 
+    def _rol_canal(runtime) -> tuple[str, str]:
+        ctx = runtime.context or AgentContext()
+        return ctx.rol, ctx.canal
+
     # ---- middleware del arnés create_agent ------------------------------------
     @dynamic_prompt
     def prompt_con_perfil_y_ruta(request: ModelRequest) -> str:
         """System prompt dinámico: perfil del Store + decisión del router (Clase 6/9)."""
         profile, uid = _profile(request.runtime)
-        return render_system_prompt(template, request.state.get("ruta"), profile, uid, cat)
+        return render_system_prompt(
+            template, request.state.get("ruta"), profile, uid, cat, *_rol_canal(request.runtime)
+        )
 
     @wrap_model_call
     def herramientas_por_ruta(request: ModelRequest, handler):
@@ -219,8 +237,9 @@ def build_graph(deps: AgentDeps, checkpointer=None, store=None):
             ),
             verificar_cifras,
             ModelRetryMiddleware(max_retries=2, initial_delay=1.5),
-            ModelCallLimitMiddleware(run_limit=6, exit_behavior="end"),
-            ToolCallLimitMiddleware(run_limit=6),
+            *([ModelFallbackMiddleware(deps.fallback_model)] if deps.fallback_model is not None else []),
+            ModelCallLimitMiddleware(run_limit=8, exit_behavior="end"),
+            ToolCallLimitMiddleware(run_limit=8),
         ],
         name="agente",
     )
@@ -234,7 +253,7 @@ def build_graph(deps: AgentDeps, checkpointer=None, store=None):
 
     def directo_node(state: ChatState, runtime: Runtime[AgentContext]) -> dict:
         profile, uid = _profile(runtime)
-        system = render_system_prompt(template, state.get("ruta"), profile, uid, cat)
+        system = render_system_prompt(template, state.get("ruta"), profile, uid, cat, *_rol_canal(runtime))
         history = trim_messages(
             [
                 m

@@ -14,7 +14,7 @@ artefacto (fragmentos, filas, hallazgos del blindaje) va a la app y a la traza.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from langchain.tools import ToolRuntime, tool
 from pydantic import BaseModel, Field
@@ -37,6 +37,9 @@ class AgentContext:
 
     user_id: str = "invitado"
     thread_id: str = ""
+    rol: str = "invitado"  # supervisor | tecnico | invitado (Módulo 3: solo el taller escribe novedades)
+    canal: str = "web"  # web | whatsapp
+    adjuntos: list[str] = field(default_factory=list)  # rutas o data-URL de fotos que mandó el usuario
 
 
 class BuscarDocumentos(BaseModel):

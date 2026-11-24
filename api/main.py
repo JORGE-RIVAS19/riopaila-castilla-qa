@@ -18,6 +18,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
 from api.schemas import (
     ChatRequest,
@@ -37,6 +38,7 @@ from riopaila_qa.agent.router import route_by_rules
 from riopaila_qa.agent.service import AgentService
 from riopaila_qa.agent.settings import get_agent_settings
 from riopaila_qa.config import ROOT_DIR
+from riopaila_qa.taller.config import get_taller_settings
 
 EVAL_DIR = ROOT_DIR / "docs" / "evaluacion"
 
@@ -52,8 +54,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Riopaila Castilla · Agente conversacional (TAAML M2 · Grupo 3)",
-    version="2.0.0",
+    title="Riopaila Castilla · Asistente del Taller Castilla (TAAML M3 · Grupo 3)",
+    version="3.0.0",
     description="Agente con memoria, RAG sobre Qdrant, herramienta CSV, router y blindaje.",
     lifespan=lifespan,
 )
@@ -63,6 +65,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Módulo 3: gráficas, páginas de manuales e informes PDF que generan las herramientas.
+_MEDIA = get_taller_settings().media_dir
+_MEDIA.mkdir(parents=True, exist_ok=True)
+app.mount("/media", StaticFiles(directory=_MEDIA), name="media")
 
 
 def agent(request: Request) -> AgentService:
@@ -100,7 +108,9 @@ def sse(events: Iterator[dict]) -> Iterator[str]:
 @app.post("/api/chat/stream", tags=["chat"])
 def chat_stream(body: ChatRequest, request: Request) -> StreamingResponse:
     """Turno con *streaming* (SSE): eventos ``start, route, tool_start, tool_end, token, error, final``."""
-    events = agent(request).stream_turn(body.mensaje, body.thread_id, body.user_id)
+    events = agent(request).stream_turn(
+        body.mensaje, body.thread_id, body.user_id, body.canal, body.adjuntos, body.solo_lectura
+    )
     return StreamingResponse(
         sse(events),
         media_type="text/event-stream",
@@ -111,7 +121,9 @@ def chat_stream(body: ChatRequest, request: Request) -> StreamingResponse:
 @app.post("/api/chat", tags=["chat"], response_model=ChatResponse)
 def chat(body: ChatRequest, request: Request) -> ChatResponse:
     """Turno sin streaming (útil para curl y pruebas)."""
-    res = agent(request).run_turn(body.mensaje, body.thread_id, body.user_id)
+    res = agent(request).run_turn(
+        body.mensaje, body.thread_id, body.user_id, body.canal, body.adjuntos, body.solo_lectura
+    )
     return ChatResponse(**{k: res.get(k) for k in ChatResponse.model_fields if k in res})
 
 
@@ -210,3 +222,33 @@ def retrieval_eval() -> dict:
     if not path.exists():
         raise HTTPException(404, "Aún no hay evaluación: ejecuta `uv run python scripts/eval_retrieval.py`.")
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+# ---- Módulo 3 · Taller Castilla ------------------------------------------------------
+
+
+def _taller(request: Request):
+    svc = agent(request)
+    if not getattr(svc, "taller_info", {}).get("activo"):
+        raise HTTPException(503, "La base del taller no está cargada: ejecuta scripts/build_taller.py.")
+    return svc
+
+
+@app.get("/api/taller/resumen", tags=["taller"])
+def taller_resumen(request: Request) -> dict:
+    """Tablero de la torre de control: fecha de corte, flota activa, alertas y novedades abiertas."""
+    return _taller(request).taller_resumen()
+
+
+@app.get("/api/taller/parte-diario", tags=["taller"])
+def taller_parte_diario(request: Request, dias: int = Query(7, ge=1, le=60)) -> dict:
+    """Parte diario (lo usa la tarea programada de las 6 a.m.): texto para WhatsApp + gráfica."""
+    return _taller(request).parte_diario(dias)
+
+
+@app.get("/api/taller/novedades", tags=["taller"])
+def taller_novedades(request: Request, estado: str | None = Query("abierta")) -> list[dict]:
+    """Novedades de campo registradas por WhatsApp o por la web (con confirmación humana)."""
+    from riopaila_qa.taller import novedades
+
+    return novedades.listar(_taller(request).taller.novedades_db, estado or None, 50)

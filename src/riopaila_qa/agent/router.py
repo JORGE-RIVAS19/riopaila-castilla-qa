@@ -13,6 +13,11 @@ tipadas con probabilidad, baratas, antes de encender el LLM caro.
 
 Rutas: ``directo`` (sin herramientas), ``memoria`` (guardar perfil), ``rag``
 (documentos en Qdrant), ``datos`` (CSV con @tool) y ``mixto`` (ambas fuentes).
+
+Módulo 3 (Taller Castilla) suma tres rutas con sus herramientas:
+``taller`` (flota, consumos SAP, repuestos, alertas, predicción, gráficas e informes),
+``manual`` (manuales técnicos con la foto de la página, identificación por foto) y
+``novedad`` (registrar una falla de campo, con confirmación humana).
 """
 
 from __future__ import annotations
@@ -25,8 +30,8 @@ from typing import Literal
 from langchain_core.language_models.chat_models import BaseChatModel
 from pydantic import BaseModel, Field
 
-Ruta = Literal["directo", "memoria", "rag", "datos", "mixto"]
-RUTAS: tuple[str, ...] = ("directo", "memoria", "rag", "datos", "mixto")
+Ruta = Literal["directo", "memoria", "rag", "datos", "mixto", "taller", "manual", "novedad"]
+RUTAS: tuple[str, ...] = ("directo", "memoria", "rag", "datos", "mixto", "taller", "manual", "novedad")
 LOW_CONFIDENCE = 0.5
 LLM_THRESHOLD = 0.7
 
@@ -36,7 +41,33 @@ TOOLS_BY_ROUTE: dict[str, tuple[str, ...]] = {
     "rag": ("buscar_documentos", "recordar_dato_usuario"),
     "datos": ("consultar_indicadores", "comparar_cifras"),
     "mixto": ("buscar_documentos", "consultar_indicadores", "comparar_cifras"),
+    "taller": (
+        "buscar_equipo",
+        "ficha_equipo",
+        "flota_por_familia",
+        "ranking_gasto_equipos",
+        "historial_consumo",
+        "detalle_orden",
+        "donde_se_usa_material",
+        "grafica_gasto",
+        "buscar_repuesto",
+        "verificar_codigo_sap",
+        "repuestos_frecuentes",
+        "detectar_anomalias",
+        "predecir_reposicion",
+        "generar_informe_pdf",
+        "comparar_cifras",
+    ),
+    "manual": (
+        "buscar_manual",
+        "buscar_equipo",
+        "buscar_repuesto",
+        "verificar_codigo_sap",
+        "identificar_repuesto_por_foto",
+    ),
+    "novedad": ("registrar_novedad", "buscar_equipo"),
 }
+RUTAS_TALLER = ("taller", "manual", "novedad")
 
 
 class RouteDecision(BaseModel):
@@ -58,7 +89,7 @@ class RouteDecision(BaseModel):
 class LLMRouteChoice(BaseModel):
     """Esquema que el LLM debe llenar cuando las reglas dudan."""
 
-    ruta: Ruta = Field(description="directo | memoria | rag | datos | mixto")
+    ruta: Ruta = Field(description="directo | memoria | rag | datos | mixto | taller | manual | novedad")
     confianza: float = Field(ge=0, le=1, description="Probabilidad de que la ruta sea la correcta")
     razon: str = Field(description="Justificación en una frase")
 
@@ -91,6 +122,30 @@ DOCUMENTAL = re.compile(
     r"compromiso|programa|proyecto|historia|fundad\w*|que es|que hace|como|por que|donde|explica|"
     r"describe|sostenib\w*|certifica\w*|comunidad\w*|cana|azucar|energia|alcohol|organic\w*)\b"
 )
+# --- Módulo 3 · taller -----------------------------------------------------------------------
+FOTO = re.compile(r"\[foto adjunta\]")
+TALLER = re.compile(
+    r"\b(equipos?|flota|tractor\w*|cosechadora\w*|alzadora\w*|cargadora\w*|mulas?|tractomulas?|vagon\w*|"
+    r"camion\w*|volqueta\w*|puma|case|john deere|kenworth|game|ch570|a8800|2254|t800|t370|"
+    r"repuestos?|materiales?|codigo sap|sap|orden(es)?|ot|consum\w*|gast\w*|costos?|cuest\w*|"
+    r"filtros?|aceites?|llantas?|cuchillas?|rodamientos?|mangueras?|baterias?|"
+    r"anomal\w*|alerta\w*|raro|disparad\w*|predic\w*|reposicion|proxim\w* cambio|que le toca|kit|"
+    r"grafica\w*|tendencia|informe|reporte|pdf|ranking|top|mas gast\w*|historial|hoja de vida|"
+    r"taller|mantenimiento|preventivo|correctivo)\b"
+)
+MANUAL = re.compile(
+    r"\b(manual\w*|diagrama\w*|plano\w*|fusibles?|reles?|torque|apriete|especificacion\w*|procedimiento\w*|"
+    r"como (se )?(cambi|ajust|calibr|engras|purg|desmont|mont|revis|reviso|cambio|cambia)\w*|paso a paso|"
+    r"codigo de (error|falla)|error \d+|falla \d+|despiece|numero de parte|referencia|capacidad de aceite|"
+    r"intervalo\w*|cada cuant\w*|que pieza|que repuesto es|identifica\w*|esquema)\b"
+)
+NOVEDAD = re.compile(
+    r"\b(registr\w*|report\w*|reportar|anota\w*|novedad\w*)\b.*\b(falla|fuga|dano|danad\w*|rot[oa]|"
+    r"novedad|varad\w*|parad\w*|no prende|no arranca|recalent\w*|ruido)|"
+    r"\b(se (vara|varo|dano|rompio|recalento)|esta (varad|botando|parad)\w*|bota (aceite|agua))"
+)
+
+RIOPAILA_CORP = re.compile(r"\b(riopaila|accionistas?|sostenib\w*|ingresos|utilidad|ebitda|alcohol carburante)\b")
 COMPARE = re.compile(r"\b(compar\w*|frente a|versus|vs|contra|cumpli\w*|alcanz\w*|diferencia|respecto)\b")
 
 
@@ -107,6 +162,10 @@ def route_by_rules(message: str) -> RouteDecision:
         "numerico": min(1.0, 0.35 * len(NUMERIC.findall(m))),
         "documental": min(1.0, 0.3 * len(DOCUMENTAL.findall(m))),
         "comparar": 1.0 if COMPARE.search(m) else 0.0,
+        "foto": 1.0 if FOTO.search(m) else 0.0,
+        "taller": min(1.0, 0.35 * len(TALLER.findall(m))),
+        "manual": min(1.0, 0.45 * len(MANUAL.findall(m))),
+        "novedad": 1.0 if NOVEDAD.search(m) else 0.0,
     }
 
     def done(ruta: str, conf: float, razon: str) -> RouteDecision:
@@ -118,6 +177,19 @@ def route_by_rules(message: str) -> RouteDecision:
             latencia_ms=round((time.perf_counter() - t0) * 1000, 2),
         )
 
+    if s["foto"]:
+        return done("manual", 0.9, "Mandó una foto: se identifica la pieza y se busca su código SAP.")
+    if s["novedad"]:
+        return done("novedad", 0.85, "Reporta una falla de campo: se registra la novedad con confirmación humana.")
+    if s["manual"] >= 0.45 and s["manual"] >= s["taller"] - 0.35:
+        return done(
+            "manual",
+            0.8 if s["taller"] else 0.75,
+            "Pregunta técnica de procedimiento o especificación: se busca en los manuales (con la foto).",
+        )
+    if s["taller"] >= 0.35 and not RIOPAILA_CORP.search(m):
+        conf = 0.85 if s["taller"] >= 0.7 else 0.7
+        return done("taller", conf, "Pregunta del taller: flota, consumos, repuestos o alertas sobre datos SAP.")
     if s["saludo"] or (words <= 3 and not s["numerico"] and not s["documental"] and not s["sobre_mi"]):
         return done("directo", 0.97, "Saludo o mensaje trivial: no hace falta buscar.")
     if s["meta"]:
@@ -144,6 +216,11 @@ ROUTER_PROMPT = """Eres el router de un asistente de Riopaila Castilla. Elige UN
 - rag: la respuesta está en los documentos públicos de la empresa (historia, productos, sostenibilidad, noticias).
 - datos: piden una cifra exacta de indicadores (ingresos, utilidad, ventas de energía, alcohol, por año/trimestre).
 - mixto: piden comparar o combinar una cifra de los indicadores con algo que dice un documento (p. ej. una meta).
+- taller: preguntas del Taller Castilla sobre equipos, flota, consumos y gastos en SAP, repuestos, códigos de material,
+  alertas de consumo, predicción de reposición, gráficas o informes PDF.
+- manual: procedimientos, especificaciones, diagramas, fusibles, códigos de error o despieces de los manuales técnicos,
+  o identificar una pieza por foto.
+- novedad: el usuario reporta una falla o daño de un equipo para que quede registrado.
 Responde solo con el esquema. Mensaje:
 <mensaje>{mensaje}</mensaje>"""
 

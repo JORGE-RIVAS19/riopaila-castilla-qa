@@ -20,6 +20,7 @@ class AgentSettings:
     provider: str = _env("LLM_PROVIDER", "gemini")
     router_provider: str = _env("ROUTER_PROVIDER", "")  # vacío = el mismo del agente
     router_mode: str = _env("ROUTER_MODE", "hibrido")  # reglas | llm | hibrido
+    fallback_provider: str = _env("LLM_FALLBACK_PROVIDER", "")  # M3: p. ej. gemini si DeepSeek falla
 
     # --- Embeddings (Clase 6) -------------------------------------------------
     embed_provider: str = _env("EMBED_PROVIDER", "ollama")  # ollama | gemini | fake
