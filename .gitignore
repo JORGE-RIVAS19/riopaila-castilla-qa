@@ -34,3 +34,13 @@ data/qdrant/
 data/memory/
 logs/
 frontend/tsconfig.tsbuildinfo
+
+# Módulo 3 · datos reales del taller y manuales (con derechos de autor): solo en el servidor
+data/taller/*.duckdb
+data/taller/*.sqlite
+data/taller/muestra/*.duckdb
+data/manuales/
+data/media/
+*.xlsx
+*.XLSX
+deploy/numeros.env
