@@ -1,0 +1,25 @@
+{"id": "M01", "consulta": "¿Cada cuánto se cambia el filtro de aire de la cabina del Puma 165?", "modelo": "PUMA 165", "manual_id": "puma165-operador", "patron": "filtro de aire de la cabina"}
+{"id": "M02", "consulta": "presión de inflado de las llantas del tractor Puma", "modelo": "PUMA 165", "manual_id": "puma165-operador", "patron": "presi[oó]n de (los )?neum[aá]ticos"}
+{"id": "M03", "consulta": "¿cuántos litros de aceite lleva el Puma 165?", "modelo": "PUMA 165", "manual_id": "puma165-operador", "patron": "capacidad(es)? .{0,40}(dep[oó]sito|aceite)"}
+{"id": "M04", "consulta": "cambio del filtro de aceite de la bomba de carga hidráulica", "modelo": "PUMA 165", "manual_id": "puma165-operador", "patron": "bomba de carga"}
+{"id": "M05", "consulta": "¿cómo se lastra el tractor? contrapesos delanteros", "modelo": "PUMA 165", "manual_id": "puma165-operador", "patron": "contrapes"}
+{"id": "M06", "consulta": "filtro de aire del motor del Puma, manual en portugués", "modelo": "PUMA 180", "manual_id": "puma165-210-operador-pt", "patron": "filtro de ar"}
+{"id": "M07", "consulta": "par de apriete de la culata del motor del Puma", "modelo": "PUMA 200", "manual_id": "puma190-230-servicio", "patron": "culata"}
+{"id": "M08", "consulta": "desmontaje de la bomba de inyección de combustible", "modelo": "PUMA 200", "manual_id": "puma190-230-servicio", "patron": "bomba de inyecci"}
+{"id": "M09", "consulta": "calibración del embrague de la transmisión del Puma", "modelo": "PUMA", "manual_id": "puma-calibracion-codigos", "patron": "calibraci[oó]n del embrague|clutch calibration|calibrate.*clutch"}
+{"id": "M10", "consulta": "qué significa un código de falla en el tablero del Puma", "modelo": "PUMA", "manual_id": "puma-calibracion-codigos", "patron": "c[oó]digo de (falla|error)"}
+{"id": "M11", "consulta": "cambio del filtro de combustible del John Deere 6165J", "modelo": "6165J", "manual_id": "jd6165j-tecnico", "patron": "filtro de combust"}
+{"id": "M12", "consulta": "sistema de frenos del 6165J", "modelo": "6165J", "manual_id": "jd6165j-tecnico", "patron": "sistema de freio"}
+{"id": "M13", "consulta": "puntos de engrase de la alzadora 2254", "modelo": "2254", "manual_id": "jd2254-operador", "patron": "engras"}
+{"id": "M14", "consulta": "revisar el nivel de aceite hidráulico de la alzadora", "modelo": "2254", "manual_id": "jd2254-operador", "patron": "aceite hidr[aá]ulico"}
+{"id": "M15", "consulta": "mantenimiento de las baterías de la cargadora de caña", "modelo": "2254", "manual_id": "jd2254-operador", "patron": "bater[ií]a"}
+{"id": "M16", "consulta": "número de parte de la bomba hidráulica de la alzadora 2254", "modelo": "2254", "manual_id": "jd2254-partes", "patron": "HYDRAULIC PUMP"}
+{"id": "M17", "consulta": "cómo diagnosticar un circuito abierto o un corto a tierra en la mula", "modelo": "KENWORTH", "manual_id": "kenworth-electrico", "patron": "open circuit|short to ground"}
+{"id": "M18", "consulta": "el tablero CECU no enciende, cómo lo soluciono", "modelo": "KENWORTH", "manual_id": "kw-bit-1014-cecu", "patron": "CECU"}
+{"id": "M19", "consulta": "diagrama eléctrico del pito de la tractomula", "modelo": "KENWORTH", "manual_id": "kw-p94-1389", "patron": "HORN"}
+{"id": "M20", "consulta": "diagrama de los vidrios eléctricos y espejos de las puertas de la mula", "modelo": "KENWORTH", "manual_id": "kw-p94-1458", "patron": "DOOR|MIRROR"}
+{"id": "M21", "consulta": "no prende la luz de reversa de la mula, diagrama", "modelo": "KENWORTH", "manual_id": "kw-p94-1398", "patron": "BACKUP"}
+{"id": "M22", "consulta": "conexión de la toma de fuerza y acelerador remoto del motor ISX", "modelo": "ISX", "manual_id": "kw-p94-1896", "patron": "PTO|THROT"}
+{"id": "M23", "consulta": "torque de los pernos de la suspensión Primaax", "modelo": "KENWORTH", "manual_id": "kw-c97-1077", "patron": "TORQUE|PRIMAAX"}
+{"id": "M24", "consulta": "qué fusible es el del radio en la mula", "modelo": "T800", "manual_id": "kw-fusibles", "patron": "RADIO"}
+{"id": "M25", "consulta": "diagrama del motor Cummins ISC de la T370", "modelo": "T370", "manual_id": "kw-p94-1476", "patron": "."}
