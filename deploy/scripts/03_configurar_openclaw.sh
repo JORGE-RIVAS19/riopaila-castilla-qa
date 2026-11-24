@@ -51,6 +51,7 @@ sudo systemctl daemon-reload && sudo systemctl enable --now riopaila-api
 sleep 8 && curl -s http://127.0.0.1:8000/api/health | jq '.llm, .taller'
 
 echo "==> Gateway como servicio + vincular WhatsApp (escanea el QR con el celular del BOT)"
+sudo loginctl enable-linger "$USER"   # el servicio de usuario sigue vivo al cerrar la sesión SSH
 openclaw gateway install
 openclaw channels login --channel whatsapp
 openclaw channels status --probe

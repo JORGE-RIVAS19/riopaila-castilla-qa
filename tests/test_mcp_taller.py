@@ -46,6 +46,18 @@ def test_telefono_invalido():
         mcp._telefono("hola")
 
 
+def test_sin_numero_responde_en_solo_lectura():
+    recibido = {}
+
+    def api(request: httpx.Request) -> httpx.Response:
+        recibido.update(json.loads(request.content))
+        return httpx.Response(200, json={"content": "ok"})
+
+    with httpx.Client(transport=httpx.MockTransport(api), base_url="http://x") as cli:
+        mcp._chat("registra la falla del 25375", "", None, False, cli)
+    assert recibido["solo_lectura"] is True and recibido["thread_id"] == "wa-desconocido"
+
+
 @pytest.fixture()
 def api_taller(tmp_path: Path, monkeypatch):
     from api.main import app

@@ -61,7 +61,11 @@ def _telefono(valor: str) -> str:
 def _chat(
     mensaje: str, telefono: str, adjuntos: list[str] | None, solo_lectura: bool, cliente: httpx.Client | None = None
 ) -> RespuestaTaller:
-    tel = _telefono(telefono)
+    try:
+        tel = _telefono(telefono)
+    except ValueError:
+        # Si el gateway no entregó el número, se responde igual pero en solo lectura y en un hilo aparte.
+        tel, solo_lectura = "desconocido", True
     cuerpo = {
         "mensaje": mensaje[:4000],
         "thread_id": f"wa-{tel}",
