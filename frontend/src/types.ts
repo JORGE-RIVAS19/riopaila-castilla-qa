@@ -61,8 +61,17 @@ export interface ToolRun {
     guardado?: boolean;
     clave?: string;
     valor?: string;
+    media?: MediaItem[];
     [k: string]: unknown;
   };
+}
+
+/** Módulo 3: imagen (página de manual, gráfica) o documento (informe PDF) que generó una herramienta. */
+export interface MediaItem {
+  tipo: "imagen" | "documento";
+  url: string | null;
+  pie: string;
+  ruta?: string;
 }
 
 export interface ChatMessage {
