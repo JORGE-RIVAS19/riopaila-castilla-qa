@@ -32,10 +32,12 @@
     },
   },
 
-  // ---- WhatsApp: sesión vinculada + lista blanca E.164 -----------------------------------------------------
+  // ---- WhatsApp: sesión vinculada + lista blanca E.164 + pairing ------------------------------------------
   channels: {
     whatsapp: {
-      dmPolicy: "allowlist",
+      // pairing: la lista blanca entra directo; un número nuevo recibe un código que el supervisor aprueba con
+      // `openclaw pairing approve whatsapp <CÓDIGO>`. Nadie fuera de la lista habla con el agente sin aprobación.
+      dmPolicy: "pairing",
       allowFrom: [__ALLOW_FROM__],
       groupPolicy: "disabled",
       mediaMaxMb: 20,
