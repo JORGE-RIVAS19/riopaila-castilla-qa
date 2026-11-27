@@ -44,3 +44,6 @@ data/media/
 *.xlsx
 *.XLSX
 deploy/numeros.env
+
+# QA con Playwright: capturas y trazas de cada corrida
+tests/e2e/artifacts/

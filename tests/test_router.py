@@ -53,3 +53,12 @@ def test_router_llm_caido_usa_reglas():
 
 def test_toda_ruta_tiene_herramientas_definidas():
     assert set(TOOLS_BY_ROUTE) == {"directo", "memoria", "rag", "datos", "mixto", "taller", "manual", "novedad"}
+
+
+def test_vitrina_de_la_compania_va_a_datos():
+    from riopaila_qa.agent.router import TOOLS_BY_ROUTE, route_by_rules
+
+    for texto in ("¿Qué es Riopaila Castilla en cifras?", "mándame la infografía", "gráfica de los ingresos"):
+        d = route_by_rules(texto)
+        assert d.ruta == "datos" and "infografia_riopaila" in TOOLS_BY_ROUTE[d.ruta], texto
+    assert route_by_rules("gráfica de gasto de las cosechadoras").ruta == "taller"

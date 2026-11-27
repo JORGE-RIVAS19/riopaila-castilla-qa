@@ -13,7 +13,9 @@ class ChatRequest(BaseModel):
     user_id: str = Field("invitado", max_length=60, description="Usuario dueño de la memoria de largo plazo")
     canal: Literal["web", "whatsapp"] = Field("web", description="Canal de origen (el rol lo decide el servidor)")
     adjuntos: list[str] = Field(default_factory=list, max_length=4, description="Rutas o data-URL de fotos")
-    solo_lectura: bool = Field(False, description="Fuerza el rol invitado (el puente de WhatsApp lo usa por defecto)")
+    solo_lectura: bool = Field(
+        False, description="Canal sin escritura: conserva el perfil de datos, pero no registra novedades"
+    )
 
 
 class ChatResponse(BaseModel):

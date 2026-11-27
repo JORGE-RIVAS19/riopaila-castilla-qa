@@ -65,6 +65,9 @@ class ScriptedToolModel(BaseChatModel):
         taller = self._taller(text)
         if taller:
             return AIMessage("", tool_calls=[{**taller, "id": f"c{self.calls}"}])
+        vitrina = self._vitrina(text)
+        if vitrina:
+            return AIMessage("", tool_calls=[{**vitrina, "id": f"c{self.calls}"}])
         if "buscar_documentos" in self.bound_tools:
             return AIMessage(
                 "", tool_calls=[{"name": "buscar_documentos", "args": {"consulta": text}, "id": f"c{self.calls}"}]
@@ -96,6 +99,18 @@ class ScriptedToolModel(BaseChatModel):
         if m and "trabajo" in text.lower():
             return AIMessage(f"Trabajas en {m.group(1).strip()}.")
         return AIMessage("¡Hola! Soy el asistente de Riopaila Castilla. ¿En qué te ayudo?")
+
+    def _vitrina(self, text: str) -> dict | None:
+        """Perfil visitante: infografía o serie de cifras públicas (solo si el router las habilitó)."""
+        t = text.lower()
+        b = set(self.bound_tools)
+        if "grafica_indicador" in b and re.search(r"gr[aá]fica", t):
+            ind = "utilidad_neta" if "utilidad" in t else "ingresos_operacionales"
+            return {"name": "grafica_indicador", "args": {"indicador": ind}}
+        if "infografia_riopaila" in b and re.search(r"en cifras|infograf|qu[eé] es riopaila", t):
+            tema = "energia" if "energ" in t else "etanol" if "etanol" in t else "panorama"
+            return {"name": "infografia_riopaila", "args": {"tema": tema}}
+        return None
 
     def _taller(self, text: str) -> dict | None:
         """Módulo 3: elige la herramienta del taller por palabras clave (solo si el router la habilitó)."""
