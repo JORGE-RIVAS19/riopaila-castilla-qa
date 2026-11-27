@@ -32,6 +32,10 @@ Escríbele al número del bot por WhatsApp como le escribirías a un compañero 
 |---|---|
 | Invitado (cualquier número en la lista blanca) | consultar todo, sin escribir |
 | Técnico / supervisor (números de `TALLER_ROLES` y `toolsBySender`) | además, registrar novedades con confirmación |
+| Número nuevo | recibe un código de *pairing*; el supervisor lo aprueba y queda como invitado |
+
+> **Primer contacto:** WhatsApp oculta el número de quien escribe por primera vez. Antes de que alguien nuevo use el
+> bot, escríbele “hola” **desde el celular del bot**; desde ese momento el servidor lo reconoce.
 
 ## Para la demo (sábado 28)
 

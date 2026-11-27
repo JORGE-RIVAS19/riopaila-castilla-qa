@@ -2,7 +2,7 @@
 
 **Formato:** 7 min de pitch con demo en vivo por WhatsApp (sin diapositivas) + 8 min de discusión técnica y preguntas.
 **Antes de entrar (8:30):** `bash deploy/scripts/verificar.sh` en verde, celular del bot cargado, dos teléfonos de
-invitados con el número guardado, el repo en una pestaña y `openclaw logs --follow` en otra.
+invitados ya saludados **desde el celular del bot** (WhatsApp oculta el número de quien escribe por primera vez; si el bot escribe primero, el servidor lo reconoce), el repo en una pestaña y `openclaw logs --follow` en otra.
 
 ## Pitch (7 min)
 
@@ -40,6 +40,7 @@ invitados con el número guardado, el repo en una pestaña y `openclaw logs --fo
 - **¿Qué pasa si un manual trae una instrucción maliciosa?** Datos pasivos en XML + detector de inyección + red lines en AGENTS.md.
 - **¿Datos reales en GitHub?** No: SAP y manuales solo en el servidor; el repo tiene una muestra anonimizada.
 - **¿Cómo saben que la búsqueda funciona?** 25 consultas etiquetadas: nDCG@10 0,58 / MRR 0,72 léxico; UMAP muestra que el espacio léxico agrupa por idioma, por eso el glosario y los embeddings multilingües.
+- **¿Cómo entra alguien nuevo, como el profesor?** El bot le escribe primero (WhatsApp revela el número solo si ya hay conversación) y, si no está en la lista blanca, recibe un código de *pairing* que el supervisor aprueba.
 - **¿Si se cae?** systemd reinicia API y gateway; la memoria está en disco; Gemini de respaldo; segundo celular vinculado.
 
 ---

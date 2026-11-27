@@ -59,6 +59,7 @@ El script instala OpenClaw (versión fija), los plugins de WhatsApp y DeepSeek, 
 `~/.openclaw/.env`, permisos 600), copia el workspace (SOUL, AGENTS, USER, MEMORY, bitácora y skill), genera
 `~/.openclaw/openclaw.json` desde la plantilla endurecida, levanta el API como servicio systemd, instala el gateway
 como servicio y muestra el **QR**: escanéalo desde el celular del bot en *WhatsApp → Dispositivos vinculados*.
+También construye la imagen del sandbox (`openclaw-sandbox:bookworm-slim`) y deja el gateway con `dmPolicy: "pairing"`.
 Al final programa el parte diario de las 6:00 a. m. y corre `openclaw security audit`.
 
 ## 5. Verificar (la prueba de 3 minutos)
@@ -80,6 +81,7 @@ gcloud compute ssh taller-castilla -- -L 8000:127.0.0.1:8000 -L 18789:127.0.0.1:
 | Síntoma | Qué hacer |
 |---|---|
 | El bot no responde | `openclaw gateway status` · `openclaw channels status --probe` · `sudo systemctl status riopaila-api` |
+| Un número nuevo escribe y no hay respuesta; el log dice `WhatsApp inbound LID identity unavailable` | WhatsApp ocultó su número (LID). Desde el celular del bot escríbele “hola” a esa persona: el servidor aprende el par número↔LID y procesa los mensajes en cola. Si no está en la lista blanca, le llega un código: `openclaw pairing approve whatsapp <CÓDIGO>` |
 | WhatsApp desvinculado | `openclaw channels login --channel whatsapp` y escanear de nuevo |
 | DeepSeek sin saldo / 429 | el agente cae solo a Gemini (`LLM_FALLBACK_PROVIDER`); en OpenClaw, `fallbacks` del modelo |
 | Qdrant ocupado al reindexar | `sudo systemctl stop riopaila-api` antes de `scripts/index_manuales.py` |
