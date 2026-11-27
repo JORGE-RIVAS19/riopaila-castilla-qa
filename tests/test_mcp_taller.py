@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import csv
 import json
 from dataclasses import replace
 from pathlib import Path
@@ -103,3 +104,78 @@ def test_recorrido_whatsapp_mcp_api_agente(api_taller, monkeypatch):
 def test_parte_diario(api_taller):
     datos = api_taller.get("/api/taller/parte-diario", params={"dias": 7}).json()
     assert "Parte del Taller Castilla" in datos["texto"] and Path(datos["media"][0]).exists()
+
+
+# ---- Perfiles: el visitante ve la muestra anonimizada; el personal de Riopaila, SAP real -------------------
+@pytest.fixture()
+def svc_perfiles(tmp_path: Path, monkeypatch):
+    real_dir = tmp_path / "real"
+    real_dir.mkdir()
+    (real_dir / "materiales.csv").write_text((MUESTRA_DIR / "materiales.csv").read_text("utf-8"), "utf-8")
+    for nombre in ("equipos.csv", "consumos.csv"):  # la base "real" se distingue por el nombre de los equipos
+        with (MUESTRA_DIR / nombre).open(encoding="utf-8", newline="") as f:
+            filas = list(csv.reader(f))
+        for fila in filas[1:]:
+            fila[1] = f"REAL {fila[1]}"
+        with (real_dir / nombre).open("w", encoding="utf-8", newline="") as f:
+            csv.writer(f).writerows(filas)
+    real = tmp_path / "real.duckdb"
+    cargar_csv(real_dir / "equipos.csv", real_dir / "materiales.csv", real_dir / "consumos.csv", real)
+    monkeypatch.setenv("TALLER_DB", str(real))
+    monkeypatch.setenv("TALLER_DB_MUESTRA", str(tmp_path / "muestra.duckdb"))  # se construye sola desde los CSV
+    monkeypatch.setenv("MEDIA_DIR", str(tmp_path / "media"))
+    monkeypatch.setenv("TALLER_NOVEDADES_DB", str(tmp_path / "nov.sqlite"))
+    monkeypatch.setenv("MANUALES_DIR", str(tmp_path / "sin_manuales"))
+    monkeypatch.setenv("TALLER_ROLES", "573001112233=tecnico,573004445566=riopaila")
+    s = replace(
+        AgentSettings(),
+        router_mode="reglas",
+        embed_provider="fake",
+        qdrant_path=tmp_path / "q",
+        memory_dir=tmp_path / "m",
+        trace_dir=tmp_path / "logs",
+    )
+    return AgentService(s, fake_llm=True)
+
+
+def _ranking(svc: AgentService, numero: str, solo_lectura: bool = False) -> tuple[str, list[str], str]:
+    eventos = list(
+        svc.stream_turn(
+            "qué cosechadoras gastaron más este trimestre? hazme el ranking",
+            thread_id=f"wa-{numero}",
+            user_id=numero,
+            canal="whatsapp",
+            solo_lectura=solo_lectura,
+        )
+    )
+    final = eventos[-1]
+    fin = next(e for e in eventos if e["type"] == "tool_end" and e["name"] == "ranking_gasto_equipos")
+    nombres = [f["denominacion"] for f in fin["artifact"]["filas"]]
+    estado = svc.graph.get_state(svc.config(f"wa-{numero}", numero)).values["messages"]
+    contenido = next(str(m.content) for m in estado if getattr(m, "name", "") == "ranking_gasto_equipos")
+    return final["rol"], nombres, contenido
+
+
+def test_visitante_ve_la_muestra_y_el_personal_ve_sap_real(svc_perfiles):
+    from riopaila_qa.taller.tools import AVISO_MUESTRA
+
+    assert svc_perfiles.taller_info["muestra_visitantes"] is True
+    rol, nombres, contenido = _ranking(svc_perfiles, "573009998877")
+    assert rol == "invitado" and nombres and not any("REAL" in n for n in nombres)
+    assert contenido.startswith(AVISO_MUESTRA)
+    for numero, perfil in (("573001112233", "tecnico"), ("573004445566", "riopaila")):
+        rol, nombres, contenido = _ranking(svc_perfiles, numero)
+        assert rol == perfil and any("REAL" in n for n in nombres) and AVISO_MUESTRA not in contenido
+    # La herramienta MCP de solo lectura no le quita los datos reales al técnico: solo el permiso de escribir.
+    rol, nombres, _ = _ranking(svc_perfiles, "573001112233", solo_lectura=True)
+    assert rol == "riopaila" and any("REAL" in n for n in nombres)
+
+
+def test_perfil_riopaila_no_registra_novedades(svc_perfiles):
+    eventos = list(
+        svc_perfiles.stream_turn(
+            "el equipo 9030 se varó, regístralo", thread_id="wa-573004445566", user_id="573004445566"
+        )
+    )
+    assert not any(e["type"] == "interrupt" for e in eventos)
+    assert "personal del taller" in eventos[-1]["content"] or eventos[-1]["pendiente"] is None

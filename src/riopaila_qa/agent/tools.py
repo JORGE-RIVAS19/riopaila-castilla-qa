@@ -6,6 +6,8 @@
 | ``consultar_indicadores``| CSV de indicadores         | sí           | datos, mixto       |
 | ``comparar_cifras``      | aritmética en Python       | sí           | datos, mixto       |
 | ``recordar_dato_usuario``| Store (largo plazo)        | sí           | memoria, rag       |
+| ``infografia_riopaila``  | CSV de indicadores → PNG   | sí           | datos, mixto       |
+| ``grafica_indicador``    | CSV de indicadores → PNG   | sí           | datos, mixto       |
 
 Cada herramienta devuelve ``(contenido, artefacto)``: el contenido va al LLM y el
 artefacto (fragmentos, filas, hallazgos del blindaje) va a la app y a la traza.
@@ -15,11 +17,13 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Literal
 
 from langchain.tools import ToolRuntime, tool
 from pydantic import BaseModel, Field
 
-from riopaila_qa.agent import memory
+from riopaila_qa.agent import memory, visual
 from riopaila_qa.rag.retriever import HybridRetriever
 from riopaila_qa.rag.shield import ShieldMode, render_documents
 from riopaila_qa.structured import (
@@ -64,14 +68,61 @@ class RecordarDato(BaseModel):
     valor: str = Field(description="El valor exacto que dijo el usuario, p. ej. 'Ana' o 'Carvajal'.")
 
 
+class InfografiaRiopaila(BaseModel):
+    """Esquema de ``infografia_riopaila``."""
+
+    tema: Literal["panorama", "energia", "etanol", "social"] = Field(
+        "panorama",
+        description=(
+            "panorama = la empresa en cifras (ingresos, utilidades, mercado, países, trabajadores, inversión); "
+            "energia = cogeneración con bagazo; etanol = alcohol carburante; social = inversión social y empleo."
+        ),
+    )
+
+
+class GraficaIndicador(BaseModel):
+    """Esquema de ``grafica_indicador``."""
+
+    indicador: str = Field(
+        description=(
+            "Indicador del catálogo, p. ej. ingresos_operacionales, utilidad_neta, produccion_alcohol_carburante, "
+            "vehiculos_oxigenados, ventas_energia, inversion_social, pagos_a_proveedores."
+        )
+    )
+
+
 def _rows_payload(rows: list[Indicador]) -> list[dict]:
     return [r.model_dump() | {"valor_legible": r.valor_legible} for r in rows]
 
 
 def build_tools(
-    retriever: HybridRetriever | None, indicadores: tuple[Indicador, ...], shield_mode: ShieldMode = "marcar"
+    retriever: HybridRetriever | None,
+    indicadores: tuple[Indicador, ...],
+    shield_mode: ShieldMode = "marcar",
+    media_dir: Path | None = None,
+    media_base_url: str = "",
 ):
     """Crea las herramientas con sus dependencias (inyección explícita, fácil de probar)."""
+
+    def _media(ruta: Path, pie: str) -> dict:
+        try:
+            rel = ruta.relative_to(media_dir).as_posix() if media_dir else ruta.name
+        except ValueError:
+            rel = ruta.name
+        url = f"{media_base_url.rstrip('/')}/media/{rel}" if media_base_url else f"/media/{rel}"
+        return {"tipo": "imagen", "ruta": str(ruta), "url": url, "pie": pie}
+
+    def _cifras(filas: list[Indicador]) -> list[dict]:
+        return [
+            {
+                "indicador": r.indicador,
+                "cifra": visual.cifra_corta(r),
+                "periodo": visual.periodo_legible(r),
+                "descripcion": r.descripcion,
+                "fuente_url": r.fuente_url,
+            }
+            for r in filas
+        ]
 
     @tool("buscar_documentos", args_schema=BuscarDocumentos, response_format="content_and_artifact")
     def buscar_documentos(consulta: str, seccion: str | None = None, tipo: str | None = None, anio: int | None = None):
@@ -178,4 +229,45 @@ def build_tools(
         item = memory.save_fact(runtime.store, ctx.user_id, clave, valor, ctx.thread_id or None)
         return f"Guardado en el perfil de {ctx.user_id}: {item['clave']} = {item['valor']}", {"guardado": True, **item}
 
-    return [buscar_documentos, consultar_indicadores, comparar_cifras, recordar_dato_usuario]
+    @tool("infografia_riopaila", args_schema=InfografiaRiopaila, response_format="content_and_artifact")
+    def infografia_riopaila(tema: str = "panorama"):
+        """Envía una INFOGRAFÍA (imagen) "Riopaila Castilla en cifras" con las cifras públicas más recientes del
+        tema, cada una con su año y su fuente. Úsala cuando pregunten qué es Riopaila, cómo le va, sus cifras,
+        su energía, su etanol o su aporte social, y para dar la bienvenida a un visitante que quiere conocerla."""
+        if media_dir is None:
+            return json.dumps({"error": "Este despliegue no genera imágenes."}), {"cifras": []}
+        ruta, filas = visual.infografia(indicadores, tema, Path(media_dir) / "graficas")
+        cifras = _cifras(filas)
+        contenido = {
+            "tema": tema,
+            "cifras": cifras,
+            "nota": "La infografía ya se envió. Comenta 2 o 3 cifras en una frase cada una y cita la fuente.",
+        }
+        pie = f"📊 {visual.TEMAS.get(tema, visual.TEMAS['panorama'])[0]}"
+        return json.dumps(contenido, ensure_ascii=False), {"cifras": cifras, "media": [_media(ruta, pie)]}
+
+    @tool("grafica_indicador", args_schema=GraficaIndicador, response_format="content_and_artifact")
+    def grafica_indicador(indicador: str):
+        """Envía una GRÁFICA (imagen) de un indicador público de Riopaila Castilla por año (p. ej. cómo han
+        evolucionado los ingresos, la utilidad, el etanol o la energía), con las cifras tal como las publicó."""
+        if media_dir is None:
+            return json.dumps({"error": "Este despliegue no genera imágenes."}), {"serie": []}
+        nombre = consultar(indicadores, ConsultaIndicadores(indicador=indicador)).filas
+        clave = nombre[0].indicador if nombre else indicador
+        ruta, serie = visual.serie_indicador(indicadores, clave, Path(media_dir) / "graficas")
+        if ruta is None:
+            disponibles = sorted({r.indicador for r in indicadores})
+            return json.dumps({"error": f"No hay datos de {indicador}.", "disponibles": disponibles}), {"serie": []}
+        cifras = _cifras(serie)
+        contenido = {"indicador": clave, "serie": cifras, "nota": "La gráfica ya se envió; comenta la tendencia."}
+        pie = f"📈 {clave.replace('_', ' ').capitalize()}"
+        return json.dumps(contenido, ensure_ascii=False), {"serie": cifras, "media": [_media(ruta, pie)]}
+
+    return [
+        buscar_documentos,
+        consultar_indicadores,
+        comparar_cifras,
+        recordar_dato_usuario,
+        infografia_riopaila,
+        grafica_indicador,
+    ]
