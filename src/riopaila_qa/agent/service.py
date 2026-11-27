@@ -30,7 +30,7 @@ from riopaila_qa.rag.documents import load_adversarial_chunks, load_corpus_chunk
 from riopaila_qa.rag.index import index_info
 from riopaila_qa.rag.retriever import HybridRetriever
 from riopaila_qa.structured import load_indicadores
-from riopaila_qa.taller.config import get_taller_settings
+from riopaila_qa.taller.config import ROLES_TALLER, get_taller_settings
 
 IMAGEN = (".jpg", ".jpeg", ".png", ".webp", ".heic")
 
@@ -107,8 +107,13 @@ class AgentService:
             HybridRetriever(chunks, self.embeddings, self.settings) if self.index.get("disponible") else None
         )
         self.indicadores = load_indicadores(self.settings.structured_csv)
-        self.tools = build_tools(self.retriever, self.indicadores)
         self.taller = get_taller_settings()
+        self.tools = build_tools(
+            self.retriever,
+            self.indicadores,
+            media_dir=self.taller.media_dir,
+            media_base_url=self.taller.media_base_url,
+        )
         self.taller_info = self._taller_tools()
         self.checkpointer = memory.open_checkpointer(self.settings)
         self.store = memory.open_store(self.settings)
@@ -156,7 +161,7 @@ class AgentService:
                 )
             except Exception:  # noqa: BLE001
                 vision_llm = None
-        deps = TallerDeps(conectar(db), self.taller, buscador, vision_llm)
+        deps = TallerDeps(conectar(db), self.taller, buscador, vision_llm, self._con_muestra(db))
         tools = build_taller_tools(deps)
         self.tools = [*self.tools, *tools]
         self.taller_deps = deps
@@ -166,7 +171,25 @@ class AgentService:
             "herramientas": len(tools),
             "paginas_manuales": len(paginas),
             "vision": bool(vision_llm),
+            "muestra_visitantes": deps.con_muestra is not None,
         }
+
+    def _con_muestra(self, db_real):
+        """Base que ven los visitantes: la muestra anonimizada (se construye desde los CSV del repo si falta)."""
+        from riopaila_qa.taller.base import cargar_csv, conectar
+        from riopaila_qa.taller.config import MUESTRA_DIR
+
+        destino = self.taller.db_muestra
+        try:
+            if destino.resolve() == db_real.resolve():
+                return conectar(db_real)
+            if not destino.exists() and (MUESTRA_DIR / "consumos.csv").exists():
+                cargar_csv(
+                    MUESTRA_DIR / "equipos.csv", MUESTRA_DIR / "materiales.csv", MUESTRA_DIR / "consumos.csv", destino
+                )
+            return conectar(destino) if destino.exists() else None
+        except Exception:  # noqa: BLE001 — sin muestra, el visitante no ve datos del taller (falla hacia lo seguro)
+            return None
 
     # ---- Módulo 3: tablero y parte diario --------------------------------------------
     def taller_resumen(self) -> dict:
@@ -294,7 +317,10 @@ class AgentService:
         adjuntos = [a for a in (adjuntos or []) if a.startswith("data:image") or Path(a).is_file()]
         trace = TurnTrace(str(uuid.uuid4()), user_id, thread_id, message)
         # El rol lo decide el servidor (lista blanca TALLER_ROLES); un canal de solo lectura nunca escribe.
-        rol = "invitado" if solo_lectura else self.taller.rol_de(user_id)
+        # Por un canal de solo lectura el personal conserva sus datos reales pero queda sin permiso de escritura.
+        rol = self.taller.rol_de(user_id)
+        if solo_lectura and rol in ROLES_TALLER:
+            rol = "riopaila"
         yield {"type": "start", "thread_id": thread_id, "user_id": user_id, "turn_id": trace.turn_id, "rol": rol}
         memory.touch_thread(self.store, user_id, thread_id, message)
         ctx = AgentContext(user_id=user_id, thread_id=thread_id, rol=rol, canal=canal, adjuntos=adjuntos)

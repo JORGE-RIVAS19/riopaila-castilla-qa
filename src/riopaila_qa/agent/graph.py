@@ -36,6 +36,7 @@ from langchain.agents.middleware import (
     after_model,
     dynamic_prompt,
     wrap_model_call,
+    wrap_tool_call,
 )
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage, SystemMessage, ToolMessage, trim_messages
@@ -222,6 +223,21 @@ def build_graph(deps: AgentDeps, checkpointer=None, store=None):
         )
         return {"messages": [RemoveMessage(id=last.id), aviso], "jump_to": "model"}
 
+    @wrap_tool_call
+    def aviso_datos_de_muestra(request, handler):
+        """Perfil visitante: las herramientas de SAP leen la muestra anonimizada y el agente debe decirlo."""
+        from riopaila_qa.taller.tools import AVISO_MUESTRA, HERRAMIENTAS_SAP, usa_muestra
+
+        resultado = handler(request)
+        ctx = getattr(request.runtime, "context", None) or AgentContext()
+        if (
+            isinstance(resultado, ToolMessage)
+            and request.tool_call.get("name") in HERRAMIENTAS_SAP
+            and usa_muestra(ctx.rol)
+        ):
+            resultado.content = f"{AVISO_MUESTRA}\n{resultado.content}"
+        return resultado
+
     agent = create_agent(
         model=deps.model,
         tools=deps.tools,
@@ -236,6 +252,7 @@ def build_graph(deps: AgentDeps, checkpointer=None, store=None):
                 keep=("messages", s.summary_keep_messages),
             ),
             verificar_cifras,
+            aviso_datos_de_muestra,
             ModelRetryMiddleware(max_retries=2, initial_delay=1.5),
             *([ModelFallbackMiddleware(deps.fallback_model)] if deps.fallback_model is not None else []),
             ModelCallLimitMiddleware(run_limit=8, exit_behavior="end"),

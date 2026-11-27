@@ -3,7 +3,7 @@
 # 🔧 Asistente del Taller Castilla · Riopaila Castilla
 
 **Agente de mantenimiento por WhatsApp** que integra el Módulo 1 (corpus), el Módulo 2 (agente con RAG, memoria y
-router) y el Módulo 3 (21 herramientas, OpenClaw y despliegue real) · Técnicas Avanzadas de IA aplicadas en Modelos de
+router) y el Módulo 3 (23 herramientas, OpenClaw y despliegue real) · Técnicas Avanzadas de IA aplicadas en Modelos de
 Lenguaje (TAAML) · Maestría en IA y Ciencias de Datos · Universidad Autónoma de Occidente · 2026-2S · **Grupo 3**
 
 ![CI](https://github.com/JORGE-RIVAS19/riopaila-castilla-qa/actions/workflows/ci.yml/badge.svg)
@@ -61,8 +61,8 @@ flowchart LR
   R --> AG["Agente ReAct (create_agent)<br/>middleware: prompt dinámico, filtro de tools,<br/>resumen, verificador de cifras, respaldo"]
   AG -- "LLM primario / respaldo" --> LLM[("DeepSeek V4 Flash<br/>Gemini (respaldo y visión)")]
   AG <--> MEM[("SQLite<br/>checkpointer + Store")]
-  AG --> T["21 herramientas @tool + Pydantic"]
-  T --> DUCK[("DuckDB<br/>SAP: equipos, materiales, consumos")]
+  AG --> T["23 herramientas @tool + Pydantic<br/>(perfil por número)"]
+  T --> DUCK[("DuckDB<br/>SAP real (personal) · muestra anonimizada (visitantes)")]
   T --> Q[("Qdrant + BM25 (RRF)<br/>corpus público + manuales")]
   T --> PDF[("22 manuales PDF<br/>render de la página")]
   T --> NOV[("SQLite novedades")]
@@ -75,7 +75,7 @@ taller al MCP; adentro, el router del agente decide la ruta (`directo`, `memoria
 `manual`, `novedad`) y **solo habilita las herramientas de esa ruta** (`TOOLS_BY_ROUTE`). Ver
 [ADR-007](docs/adr/ADR-007-openclaw-mcp-langgraph.md).
 
-### Las 21 herramientas (`@tool` + esquema Pydantic)
+### Las 23 herramientas (`@tool` + esquema Pydantic)
 
 | Grupo | Herramienta | Qué hace | Ruta |
 |---|---|---|---|
@@ -85,8 +85,23 @@ taller al MCP; adentro, el router del agente decide la ruta (`directo`, `memoria
 | Inteligencia | `detectar_anomalias` · `predecir_reposicion` · `generar_informe_pdf` | consumo ≥3× su ritmo del año anterior, próximo cambio por intervalo mediano, informe PDF | taller |
 | Conocimiento | `buscar_manual` · `buscar_documentos` | página del manual con lo buscado **resaltado** (BM25 + glosario + Qdrant, RRF) · RAG del corpus público (M2) | manual · rag |
 | Datos públicos | `consultar_indicadores` · `comparar_cifras` | cifras públicas de Riopaila (M2) y aritmética en Python | datos · mixto · taller |
+| Vitrina (M1/M2) | `infografia_riopaila` · `grafica_indicador` | infografía *Riopaila en cifras* (panorama, energía, etanol, social) y serie por año, cada cifra con su fuente | datos · mixto |
 | Memoria | `recordar_dato_usuario` | perfil de largo plazo en el Store (M2) | memoria · rag |
 | Acción (HITL) | `registrar_novedad` | `interrupt` → confirmación SÍ/NO → SQLite; solo supervisor/técnico | novedad |
+
+### Perfiles: cada quien ve lo que le corresponde
+
+El perfil lo decide el **servidor** por el número (`TALLER_ROLES`), nunca el usuario:
+
+| Perfil | Quién | Ve | Escribe |
+|---|---|---|---|
+| 🌎 `invitado` | cualquier número aprobado (visitantes, otras empresas) | **vitrina de Riopaila** (infografía, gráficas y documentos públicos con cita) + el taller sobre la **muestra anonimizada** (el agente lo avisa) | no |
+| 🏢 `riopaila` | jefes y otras áreas de la empresa | lo anterior + **SAP real** | no |
+| 🔧 `supervisor` · `tecnico` | personal del taller | todo, con SAP real | novedades con SÍ/NO |
+
+Las herramientas de SAP eligen la base según el rol del turno (`HERRAMIENTAS_SAP`, `usa_muestra`) y un middleware
+antepone el aviso de datos de muestra; las gráficas y el PDF lo llevan impreso. Ver
+[ADR-011](docs/adr/ADR-011-perfiles-por-numero.md).
 
 El servidor MCP propio (`src/riopaila_qa/mcp_taller/`) expone 3 herramientas a OpenClaw:
 `consultar_asistente_taller` (solo lectura), `gestionar_novedad_taller` (escritura, habilitada solo para los números del
@@ -96,12 +111,12 @@ taller con `tools.toolsBySender`) y `parte_diario_taller`.
 
 | Capa | Control |
 |---|---|
-| Canal | WhatsApp con `dmPolicy: allowlist` (E.164), grupos deshabilitados, número dedicado |
+| Canal | WhatsApp con lista blanca E.164 + `dmPolicy: pairing` (un número nuevo necesita aprobación), grupos deshabilitados, número dedicado |
 | Gateway | `bind: loopback` + `auth.mode: token`; secretos en `~/.openclaw/.env` (fuera del repo) |
 | Herramientas | `tools.profile: messaging`, `tools.deny` (runtime, fs, automation, browser…), `fs.workspaceOnly`, `exec` denegado, sin `elevated` |
 | Sandbox | `agents.defaults.sandbox.mode: all` en Docker (sin red, solo lectura del workspace) |
 | Permisos por remitente | `toolsBySender`: solo los números del taller ven la herramienta de escritura |
-| Agente | rol decidido por el servidor (`TALLER_ROLES`), canal de solo lectura, **HITL** con `interrupt` antes de escribir |
+| Agente | perfil decidido por el servidor (`TALLER_ROLES`): visitantes sobre la muestra anonimizada; canal de solo lectura; **HITL** con `interrupt` antes de escribir |
 | Inyección | datos pasivos en XML + detector (M2); SOUL/AGENTS con *red lines*; el LLM no calcula (verificador de cifras) |
 | Datos | SAP y manuales **solo en el servidor**; el repo trae una **muestra anonimizada** (`data/taller/muestra`) |
 
@@ -112,7 +127,8 @@ taller con `tools.toolsBySender`) y `parte_diario_taller`.
 | Retrieval de manuales (25 consultas, relevancia por patrón) | léxica + glosario con RRF: **nDCG@10 0,580 · MRR 0,723 · hit@10 0,84** (vs. 0,561 / 0,687 sin glosario) | `uv run python scripts/eval_manuales.py` |
 | Proyección UMAP / t-SNE de 5.217 páginas | trustworthiness@10 0,98 / 0,99; pureza kNN@10 por idioma 0,99 > por manual 0,92 → el espacio léxico agrupa por **idioma** (justifica glosario + embeddings multilingües) | `uv run python scripts/proyeccion_embeddings.py --fuente qdrant` |
 | Retrieval del corpus público (M2, 28 consultas) | ver [retrieval_latest.md](docs/evaluacion/retrieval_latest.md) | `uv run python scripts/eval_retrieval.py` |
-| Pruebas | pytest sin red ni LLM real (muestra anonimizada, modelo simulado, HITL de punta a punta por MCP → API → grafo) | `uv run pytest` |
+| Pruebas | pytest sin red ni LLM real (muestra anonimizada, modelo simulado, HITL de punta a punta por MCP → API → grafo, perfiles visitante/riopaila/taller) | `uv run pytest` |
+| QA end-to-end con Playwright | API, webhook de WhatsApp (POST simulado → 200), flujo del pitch y la web en teléfono 390×844 y escritorio: consola limpia, sin 4xx/5xx, sin scroll horizontal | `uv run pytest tests/e2e` · en el servidor: `E2E_BASE_URL=http://127.0.0.1:8000 uv run pytest tests/e2e` |
 
 ![UMAP de los manuales](docs/evaluacion/proyeccion/umap_tfidf.png)
 
