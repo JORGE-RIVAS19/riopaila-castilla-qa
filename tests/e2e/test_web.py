@@ -41,7 +41,7 @@ def test_flujo_del_pitch_en_la_web(navegador, web, pantalla):
             assert imagen.evaluate("i => i.complete && i.naturalWidth > 0")
         else:
             pagina.wait_for_function(
-                "() => document.querySelectorAll('.msg, [class*=message], [class*=bubble]').length >= 2",
+                "() => [...document.querySelectorAll('.msg-assistant')].some(m => m.innerText.length > 40)",
                 timeout=120_000,
             )
         pagina.wait_for_load_state("networkidle")

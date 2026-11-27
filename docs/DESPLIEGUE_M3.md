@@ -76,6 +76,20 @@ gcloud compute ssh taller-castilla -- -L 8000:127.0.0.1:8000 -L 18789:127.0.0.1:
 # API y docs: http://127.0.0.1:8000/docs · Control UI de OpenClaw: http://127.0.0.1:18789
 ```
 
+## 5b. Actualizar a una rama nueva y QA con Playwright
+
+```bash
+bash deploy/scripts/04_actualizar.sh                    # o: … 04_actualizar.sh ~/riopaila-m3.bundle
+bash deploy/scripts/04_actualizar.sh --volver           # deshace: rama y AGENTS.md anteriores
+```
+
+Cambia de rama, `uv sync`, compila la web (el API la sirve en `http://127.0.0.1:8000`), genera la evaluación del
+retrieval del M2, actualiza `AGENTS.md` del workspace, reinicia API y gateway y corre `tests/e2e` contra la app
+desplegada (`E2E_BASE_URL`). Capturas y trazas en `tests/e2e/artifacts/` (`uv run playwright show-trace …`).
+
+**Perfiles:** en `.env`, `TALLER_ROLES` asigna `supervisor`/`tecnico` (SAP real + novedades) y `riopaila` (SAP real,
+solo lectura) por número; cualquier otro número es visitante y consulta el taller sobre la muestra anonimizada.
+
 ## 6. Operación y contingencia
 
 | Síntoma | Qué hacer |

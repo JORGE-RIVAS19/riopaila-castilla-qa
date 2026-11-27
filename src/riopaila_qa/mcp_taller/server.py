@@ -1,7 +1,7 @@
 """Servidor MCP ``taller-riopaila``: el puente entre OpenClaw (WhatsApp) y el agente LangGraph.
 
 OpenClaw es la puerta (WhatsApp, voz, allowlist, workspace, DeepSeek); el cerebro del taller es el agente
-del repositorio (router + 21 herramientas + memoria + HITL) detrás de FastAPI. Este servidor expone tres
+del repositorio (router + 23 herramientas + memoria + HITL) detrás de FastAPI. Este servidor expone tres
 herramientas MCP con esquema tipado y permisos separados:
 
 * ``consultar_asistente_taller`` — consultas de **solo lectura** (el API fuerza el rol invitado).
