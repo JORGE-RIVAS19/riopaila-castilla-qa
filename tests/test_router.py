@@ -52,4 +52,4 @@ def test_router_llm_caido_usa_reglas():
 
 
 def test_toda_ruta_tiene_herramientas_definidas():
-    assert set(TOOLS_BY_ROUTE) == {"directo", "memoria", "rag", "datos", "mixto"}
+    assert set(TOOLS_BY_ROUTE) == {"directo", "memoria", "rag", "datos", "mixto", "taller", "manual", "novedad"}

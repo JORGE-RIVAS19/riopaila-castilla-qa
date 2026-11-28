@@ -58,7 +58,13 @@ class ScriptedToolModel(BaseChatModel):
                 )
             if last.name == "recordar_dato_usuario":
                 return AIMessage("Listo, lo recordaré en tus próximas conversaciones.")
+            if last.name == "registrar_novedad":
+                data = json.loads(content)
+                return AIMessage(data.get("mensaje") or data.get("error") or "Listo.")
             return AIMessage(f"Resultado: {content[:200]}")
+        taller = self._taller(text)
+        if taller:
+            return AIMessage("", tool_calls=[{**taller, "id": f"c{self.calls}"}])
         if "buscar_documentos" in self.bound_tools:
             return AIMessage(
                 "", tool_calls=[{"name": "buscar_documentos", "args": {"consulta": text}, "id": f"c{self.calls}"}]
@@ -90,6 +96,30 @@ class ScriptedToolModel(BaseChatModel):
         if m and "trabajo" in text.lower():
             return AIMessage(f"Trabajas en {m.group(1).strip()}.")
         return AIMessage("¡Hola! Soy el asistente de Riopaila Castilla. ¿En qué te ayudo?")
+
+    def _taller(self, text: str) -> dict | None:
+        """Módulo 3: elige la herramienta del taller por palabras clave (solo si el router la habilitó)."""
+        t = text.lower()
+        codigo = re.search(r"\b\d{4,6}\b", t)
+        b = set(self.bound_tools)
+        if "registrar_novedad" in b and codigo:
+            return {
+                "name": "registrar_novedad",
+                "args": {"equipo": codigo.group(), "descripcion": text, "prioridad": "alta"},
+            }
+        if "identificar_repuesto_por_foto" in b and "[foto adjunta]" in t:
+            return {"name": "identificar_repuesto_por_foto", "args": {"nota": text}}
+        if "buscar_manual" in b:
+            return {"name": "buscar_manual", "args": {"consulta": text}}
+        if "detectar_anomalias" in b and re.search(r"anomal|raro|alerta", t):
+            return {"name": "detectar_anomalias", "args": {"dias": 30}}
+        if "grafica_gasto" in b and re.search(r"gr[aá]fica|tendencia", t):
+            return {"name": "grafica_gasto", "args": {"equipo": codigo.group() if codigo else None}}
+        if "ficha_equipo" in b and codigo:
+            return {"name": "ficha_equipo", "args": {"equipo": codigo.group()}}
+        if "ranking_gasto_equipos" in b:
+            return {"name": "ranking_gasto_equipos", "args": {"dias": 90}}
+        return None
 
     def _generate(
         self,
