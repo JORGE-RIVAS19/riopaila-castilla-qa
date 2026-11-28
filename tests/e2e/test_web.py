@@ -7,6 +7,7 @@ import pytest
 
 from tests.e2e._comun import ARTEFACTOS, DESPLEGADO, EVAL_RETRIEVAL
 
+ESPERA_UI = 30_000 if DESPLEGADO else 10_000
 PANTALLAS = {"telefono": {"width": 390, "height": 844}, "escritorio": {"width": 1440, "height": 900}}
 
 
@@ -18,18 +19,21 @@ def web(base_url):
     return base_url
 
 
-def _esperar_respuesta(pagina, n: int) -> None:
-    """Espera a que la n-ésima respuesta del asistente termine de llegar (sin el cursor de streaming)."""
-    pagina.wait_for_function(
-        """n => {
-            const m = document.querySelectorAll('.msg-assistant');
-            if (m.length < n) return false;
-            const ultima = m[m.length - 1];
-            return !ultima.querySelector('.streaming') && ultima.innerText.trim().length > 20;
-        }""",
-        arg=n,
-        timeout=150_000 if DESPLEGADO else 30_000,
-    )
+def _preguntar(pagina, texto: str) -> None:
+    """Envía la pregunta y espera a que el stream SSE del turno termine y la respuesta quede pintada.
+
+    Con DeepSeek real el turno tarda; el texto de "pensando" aparece antes que la respuesta, así que la señal
+    confiable es el fin de la respuesta HTTP de /api/chat/stream, no el texto en pantalla.
+    """
+    caja = pagina.get_by_label("Mensaje")
+    caja.fill(texto)
+    with pagina.expect_response(
+        lambda r: r.url.endswith("/api/chat/stream") and r.request.method == "POST",
+        timeout=30_000,
+    ) as info:
+        caja.press("Enter")
+    assert info.value.finished() is None, "el stream del turno terminó con error"
+    pagina.wait_for_function("() => !document.querySelector('.msg-assistant .streaming')", timeout=ESPERA_UI)
 
 
 @pytest.mark.parametrize("pantalla", list(PANTALLAS))
@@ -46,26 +50,21 @@ def test_flujo_del_pitch_en_la_web(navegador, web, pantalla):
     try:
         pagina.goto(f"{web}/", wait_until="networkidle")
         assert pagina.url.endswith("/chat")
-        caja = pagina.get_by_label("Mensaje")
 
         # 1) Flujo del pitch (anuncio 008): pregunta → respuesta con citas y la tool ejecutada, visibles en la app.
-        caja.fill("¿Qué dice el corpus sobre la política de calidad de Riopaila Castilla?")
-        caja.press("Enter")
-        _esperar_respuesta(pagina, 1)
+        _preguntar(pagina, "¿Qué dice el corpus sobre la política de calidad de Riopaila Castilla?")
         pagina.get_by_role("tab", name="Fuentes").click()
         citas = pagina.locator(".inspector .sources .cite")
-        citas.first.wait_for(state="visible", timeout=10_000)
+        citas.first.wait_for(state="visible", timeout=ESPERA_UI)
         assert citas.count() >= 1
         pagina.get_by_role("tab", name="Herramientas").click()
         herramientas = pagina.locator(".inspector .tool-list")
-        herramientas.wait_for(state="visible", timeout=10_000)
+        herramientas.wait_for(state="visible", timeout=ESPERA_UI)
         assert "buscar_documentos" in herramientas.inner_text()
         pagina.screenshot(path=str(ARTEFACTOS / f"citas_{pantalla}.png"), full_page=True)
 
         # 2) Vitrina del M1/M2: la infografía de Riopaila en cifras se ve en el chat.
-        caja.fill("¿Qué es Riopaila Castilla en cifras?")
-        caja.press("Enter")
-        _esperar_respuesta(pagina, 2)
+        _preguntar(pagina, "¿Qué es Riopaila Castilla en cifras?")
         if not DESPLEGADO:  # con el modelo guionado la infografía llega siempre; con DeepSeek, casi siempre
             imagen = pagina.locator('img[src*="/media/"]').first
             imagen.wait_for(state="visible", timeout=60_000)
