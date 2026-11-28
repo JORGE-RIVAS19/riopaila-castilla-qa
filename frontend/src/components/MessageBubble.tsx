@@ -5,6 +5,7 @@ import { RouteBadge } from "./RouteBadge";
 import { ShieldAlert } from "./Sources";
 import { INTERRUMPIDA } from "../hooks/useChat";
 import { DataChart } from "./DataChart";
+import { MediaGallery } from "./MediaGallery";
 import { ThinkingSteps } from "./ThinkingSteps";
 
 interface Props {
@@ -66,6 +67,7 @@ export function MessageBubble({ message: m, selected, onSelect, onRetry }: Props
           </div>
         )}
         {!m.pending && <DataChart message={m} />}
+        <MediaGallery message={m} />
         <ShieldAlert findings={m.shield ?? []} />
         {m.error && (
           <div className={m.error === INTERRUMPIDA ? "inline-error warn" : "inline-error"}>

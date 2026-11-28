@@ -299,3 +299,34 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--green-200);
 .tt-raw .checkpoints { margin-top: 0.5rem; gap: 0.3rem; }
 .tt-raw .checkpoints li { display: flex; justify-content: space-between; gap: 0.5rem; }
 @media (prefers-reduced-motion: reduce) { .tt-turn { animation: none; } }
+
+/* Módulo 3 · páginas de manuales, gráficas e informes dentro del chat */
+.media-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+.media-item {
+  margin: 0;
+  max-width: min(420px, 100%);
+}
+.media-item img {
+  display: block;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.media-item figcaption {
+  margin-top: 4px;
+}
+.media-doc {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  text-decoration: none;
+}
