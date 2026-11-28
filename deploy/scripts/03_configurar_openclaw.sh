@@ -48,13 +48,41 @@ sed -i "s|^MEDIA_DIR=.*|MEDIA_DIR=$WS/media|" .env
 sed -e "s|__USUARIO__|$USER|" -e "s|__REPO__|$REPO|g" -e "s|__UV__|$UV|" deploy/systemd/riopaila-api.service \
   | sudo tee /etc/systemd/system/riopaila-api.service >/dev/null
 sudo systemctl daemon-reload && sudo systemctl enable --now riopaila-api
-sleep 8 && curl -s http://127.0.0.1:8000/api/health | jq '.llm, .taller'
+# El API tarda en cargar modelos e índices: espera hasta 2 min sin abortar el script.
+for _ in $(seq 1 40); do
+  if curl -sf http://127.0.0.1:8000/api/health >/dev/null; then break; fi
+  sleep 3
+done
+curl -s http://127.0.0.1:8000/api/health | jq '.llm, .taller' || echo "AVISO: el API aún no responde; revisa 'sudo systemctl status riopaila-api'"
+
+echo "==> Imagen del sandbox de OpenClaw (sin ella el agente falla con 'Sandbox image not found')"
+if ! docker image inspect openclaw-sandbox:bookworm-slim >/dev/null 2>&1; then
+  docker build -t openclaw-sandbox:bookworm-slim - <<'DOCKERFILE'
+FROM debian:bookworm-slim
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  bash ca-certificates curl git jq python3 ripgrep \
+  && rm -rf /var/lib/apt/lists/*
+RUN useradd --create-home --shell /bin/bash sandbox
+USER sandbox
+WORKDIR /home/sandbox
+CMD ["sleep", "infinity"]
+DOCKERFILE
+fi
 
 echo "==> Gateway como servicio + vincular WhatsApp (escanea el QR con el celular del BOT)"
-openclaw gateway install
+sudo loginctl enable-linger "$USER"   # el servicio de usuario sigue vivo al cerrar la sesión SSH
+export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+# systemd --user rechaza unidades en carpetas escribibles por el grupo (SERVICE_DEFINITION_UNKNOWN).
+chmod go-w "$HOME"
+mkdir -p "$HOME/.config/systemd/user"
+chmod 700 "$HOME/.config" "$HOME/.config/systemd" "$HOME/.config/systemd/user"
+openclaw gateway install --force
 openclaw channels login --channel whatsapp
 openclaw channels status --probe
 openclaw mcp doctor || true
+echo "IMPORTANTE: WhatsApp oculta el número de quien escribe por primera vez (LID). Desde el celular del BOT"
+echo "escríbele 'hola' a cada número del taller y de los invitados antes de que ellos le escriban."
 
 echo "==> Parte diario a las 6:00 a.m. (lunes a sábado)"
 for n in $(echo "$PARTE_DIARIO_A" | tr ',' ' '); do

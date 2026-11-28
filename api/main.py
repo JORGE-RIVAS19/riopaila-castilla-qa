@@ -20,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
+from api import webhook
 from api.schemas import (
     ChatRequest,
     ChatResponse,
@@ -71,6 +72,7 @@ app.add_middleware(
 _MEDIA = get_taller_settings().media_dir
 _MEDIA.mkdir(parents=True, exist_ok=True)
 app.mount("/media", StaticFiles(directory=_MEDIA), name="media")
+app.include_router(webhook.router)  # WhatsApp Cloud API: canal alterno y de contingencia
 
 
 def agent(request: Request) -> AgentService:
@@ -252,3 +254,26 @@ def taller_novedades(request: Request, estado: str | None = Query("abierta")) ->
     from riopaila_qa.taller import novedades
 
     return novedades.listar(_taller(request).taller.novedades_db, estado or None, 50)
+
+
+# ---- Frontend propio (M2) servido por el mismo API si está compilado (pnpm build) ------
+# Así la torre de control web y la auditoría con Playwright corren contra un solo origen (127.0.0.1:8000).
+_WEB = ROOT_DIR / "frontend" / "dist"
+
+
+class _SPA(StaticFiles):
+    """Rutas del frontend (/chat, /datos…) que no son archivos → index.html (React Router decide)."""
+
+    async def get_response(self, path: str, scope):
+        from starlette.exceptions import HTTPException as StarletteHTTPException
+
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code != 404 or path.startswith(("api/", "media/")) or "." in path.rsplit("/", 1)[-1]:
+                raise
+            return await super().get_response("index.html", scope)
+
+
+if (_WEB / "index.html").exists():
+    app.mount("/", _SPA(directory=_WEB, html=True), name="web")

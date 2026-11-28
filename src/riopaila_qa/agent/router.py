@@ -39,8 +39,14 @@ TOOLS_BY_ROUTE: dict[str, tuple[str, ...]] = {
     "directo": (),
     "memoria": ("recordar_dato_usuario",),
     "rag": ("buscar_documentos", "recordar_dato_usuario"),
-    "datos": ("consultar_indicadores", "comparar_cifras"),
-    "mixto": ("buscar_documentos", "consultar_indicadores", "comparar_cifras"),
+    "datos": ("consultar_indicadores", "comparar_cifras", "infografia_riopaila", "grafica_indicador"),
+    "mixto": (
+        "buscar_documentos",
+        "consultar_indicadores",
+        "comparar_cifras",
+        "infografia_riopaila",
+        "grafica_indicador",
+    ),
     "taller": (
         "buscar_equipo",
         "ficha_equipo",
@@ -145,6 +151,13 @@ NOVEDAD = re.compile(
     r"\b(se (vara|varo|dano|rompio|recalento)|esta (varad|botando|parad)\w*|bota (aceite|agua))"
 )
 
+# Vitrina de la compañía (perfil visitante): infografía y series de las cifras públicas del M1/M2.
+VITRINA = re.compile(
+    r"\b(en cifras|infografi\w*|como le (va|fue)|panorama|conocer (la empresa|riopaila)|quienes son|"
+    r"que es riopaila|cifras (de|clave)|resumen de (la empresa|riopaila))\b|"
+    r"\bgrafica\w* (de|del|de los|de la) (ingresos|utilidad\w*|ventas|produccion|alcohol|etanol|energia|"
+    r"inversion|vehiculos|pagos)"
+)
 RIOPAILA_CORP = re.compile(r"\b(riopaila|accionistas?|sostenib\w*|ingresos|utilidad|ebitda|alcohol carburante)\b")
 COMPARE = re.compile(r"\b(compar\w*|frente a|versus|vs|contra|cumpli\w*|alcanz\w*|diferencia|respecto)\b")
 
@@ -181,6 +194,8 @@ def route_by_rules(message: str) -> RouteDecision:
         return done("manual", 0.9, "Mandó una foto: se identifica la pieza y se busca su código SAP.")
     if s["novedad"]:
         return done("novedad", 0.85, "Reporta una falla de campo: se registra la novedad con confirmación humana.")
+    if VITRINA.search(m):
+        return done("datos", 0.9, "Quiere conocer la compañía: infografía o gráfica de cifras públicas con su fuente.")
     if s["manual"] >= 0.45 and s["manual"] >= s["taller"] - 0.35:
         return done(
             "manual",

@@ -10,8 +10,9 @@
 | Conocimiento  | buscar_manual (responde con la foto de la página, lo buscado resaltado)          |
 | Acción (HITL) | registrar_novedad (pide confirmación con ``interrupt`` y exige rol de taller)    |
 
-Con las 3 del Módulo 2 que siguen activas (buscar_documentos, consultar_indicadores, comparar_cifras,
-recordar_dato_usuario) el agente tiene 21 herramientas. Todas devuelven ``(contenido, artefacto)``: el
+Con las 6 del Módulo 2 (buscar_documentos, consultar_indicadores, comparar_cifras, recordar_dato_usuario,
+infografia_riopaila y grafica_indicador) el agente tiene 23 herramientas. Perfiles: el visitante consulta el taller
+sobre la muestra anonimizada (``HERRAMIENTAS_SAP``); el personal de Riopaila, sobre SAP real. Todas devuelven ``(contenido, artefacto)``: el
 contenido va al LLM; el artefacto va a la app, a la traza y, en ``media``, las imágenes y PDF que el
 puente de WhatsApp envía al usuario.
 """
@@ -27,13 +28,14 @@ from typing import Literal
 import duckdb
 from langchain.tools import ToolRuntime, tool
 from langchain_core.language_models import BaseChatModel
+from langgraph.runtime import get_runtime
 from langgraph.types import interrupt
 from pydantic import BaseModel, Field
 
 from riopaila_qa.agent.tools import AgentContext
 from riopaila_qa.taller import consultas as q
 from riopaila_qa.taller import graficas, novedades, vision
-from riopaila_qa.taller.config import TallerSettings
+from riopaila_qa.taller.config import ROLES_DATOS_REALES, ROLES_TALLER, TallerSettings
 from riopaila_qa.taller.manuales import BuscadorManuales, renderizar_pagina
 
 FAMILIA = Literal[
@@ -49,17 +51,53 @@ FAMILIA = Literal[
     "Motores y equipos de taller",
     "Otros",
 ]
-ROLES_TALLER = {"supervisor", "tecnico"}
+# Herramientas que leen SAP: a un visitante le responden con la muestra anonimizada.
+HERRAMIENTAS_SAP = {
+    "buscar_equipo",
+    "ficha_equipo",
+    "flota_por_familia",
+    "ranking_gasto_equipos",
+    "historial_consumo",
+    "detalle_orden",
+    "donde_se_usa_material",
+    "grafica_gasto",
+    "buscar_repuesto",
+    "verificar_codigo_sap",
+    "repuestos_frecuentes",
+    "identificar_repuesto_por_foto",
+    "detectar_anomalias",
+    "predecir_reposicion",
+    "generar_informe_pdf",
+}
+AVISO_MUESTRA = (
+    "DATOS DE MUESTRA ANONIMIZADOS (perfil visitante): los códigos de equipo, órdenes e importes son ficticios. "
+    "Los datos reales de SAP solo los ve el personal de Riopaila Castilla. Díselo al usuario en una frase."
+)
 SI = re.compile(r"^\s*(s[ií]|ok|dale|confirm\w*|claro|correcto|de una|h[aá]gale|listo)\b", re.IGNORECASE)
 IMAGEN = re.compile(r"(\.(jpe?g|png|webp|heic)$)|^data:image", re.IGNORECASE)
 
 
+def rol_del_turno() -> str | None:
+    """Rol del turno en curso (contexto del grafo). ``None`` fuera del agente: scripts, tablero y pruebas."""
+    try:
+        ctx = get_runtime(AgentContext).context
+    except Exception:  # noqa: BLE001 — llamada directa, sin grafo
+        return None
+    return getattr(ctx, "rol", None) or "invitado"
+
+
+def usa_muestra(rol: str | None) -> bool:
+    """Dentro del agente, todo rol sin datos reales (o desconocido) lee la muestra: se falla hacia lo seguro."""
+    return rol is not None and rol not in ROLES_DATOS_REALES
+
+
 @dataclass
 class TallerDeps:
-    con: duckdb.DuckDBPyConnection  # solo lectura
+    con: duckdb.DuckDBPyConnection  # solo lectura · SAP real (o la muestra en CI)
     settings: TallerSettings
     manuales: BuscadorManuales | None = None
     vision_llm: BaseChatModel | None = None
+    con_muestra: duckdb.DuckDBPyConnection | None = None  # lo que ven los visitantes
 
 
 def _json(obj) -> str:
@@ -165,7 +203,15 @@ def build_taller_tools(deps: TallerDeps):
     s = deps.settings
 
     def cur() -> duckdb.DuckDBPyConnection:
-        return deps.con.cursor()  # un cursor por llamada: seguro entre hilos de FastAPI
+        """Un cursor por llamada (seguro entre hilos de FastAPI) sobre la base que le toca al perfil del turno."""
+        if not usa_muestra(rol_del_turno()):
+            return deps.con.cursor()
+        if deps.con_muestra is None:
+            raise PermissionError("Los datos del taller solo están disponibles para el personal de Riopaila Castilla.")
+        return deps.con_muestra.cursor()
+
+    def marca() -> str:
+        return " · DATOS DE MUESTRA" if usa_muestra(rol_del_turno()) else ""
 
     def media(ruta: Path, tipo: str, pie: str) -> dict:
         try:
@@ -214,7 +260,7 @@ def build_taller_tools(deps: TallerDeps):
         img = graficas.grafica_ranking(
             [(f"{r['equipo']} · {r['denominacion']}", r["gasto"]) for r in filas],
             f"Equipos con mayor gasto · {familia or 'toda la flota'}",
-            f"Últimos {dias} días al {corte:%d/%m/%Y} · millones COP",
+            f"Últimos {dias} días al {corte:%d/%m/%Y} · millones COP{marca()}",
             s.media_dir / "graficas",
         )
         contenido = {
@@ -265,7 +311,7 @@ def build_taller_tools(deps: TallerDeps):
         img = graficas.grafica_barras_mensual(
             [(p.periodo, p.valor) for p in serie],
             f"Gasto de mantenimiento · {sujeto}",
-            f"Últimos {meses} meses · total {_mill(total)} COP · datos al {corte:%d/%m/%Y}",
+            f"Últimos {meses} meses · total {_mill(total)} COP · datos al {corte:%d/%m/%Y}{marca()}",
             s.media_dir / "graficas",
             ultimo_parcial=corte.day < 28,
         )
@@ -396,7 +442,7 @@ def build_taller_tools(deps: TallerDeps):
         img = graficas.grafica_barras_mensual(
             [(p.periodo, p.valor) for p in serie],
             f"Gasto mensual · {sujeto}",
-            f"Últimos {meses} meses · total {_mill(total)} COP",
+            f"Últimos {meses} meses · total {_mill(total)} COP{marca()}",
             s.media_dir / "graficas",
             ultimo_parcial=corte.day < 28,
         )
@@ -408,7 +454,12 @@ def build_taller_tools(deps: TallerDeps):
             pico = max(serie, key=lambda p: p.valor)
             resumen.append(f"Mes de mayor gasto: {pico.periodo} ({_mill(pico.valor)} COP).")
         pdf = graficas.informe_pdf(
-            f"Informe de mantenimiento · {sujeto}", resumen, [tabla, extra], [img], s.media_dir / "informes", corte
+            f"Informe de mantenimiento · {sujeto}{marca()}",
+            resumen,
+            [tabla, extra],
+            [img],
+            s.media_dir / "informes",
+            corte,
         )
         return _json({"resumen": resumen, "nota": "El PDF ya se envió al usuario."}), {
             "media": [media(pdf, "documento", f"Informe · {sujeto}")]
