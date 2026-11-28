@@ -1,0 +1,76 @@
+// ~/.openclaw/openclaw.json · Asistente del Taller Castilla (TAAML M3 · Grupo 3 · Riopaila Castilla)
+// Plantilla versionada SIN secretos: las keys viven en ~/.openclaw/.env (DEEPSEEK_API_KEY, GEMINI_API_KEY,
+// OPENCLAW_GATEWAY_TOKEN). La instala deploy/scripts/configurar_openclaw.sh reemplazando los marcadores __...__.
+{
+  // ---- Gateway: solo escucha en el propio servidor y exige token -------------------------------------------
+  gateway: {
+    mode: "local",
+    bind: "loopback",
+    port: 18789,
+    auth: { mode: "token", token: "${OPENCLAW_GATEWAY_TOKEN}" },
+  },
+
+  // Cada número de WhatsApp tiene su propia sesión (nadie ve la conversación de otro).
+  session: { dmScope: "per-channel-peer" },
+
+  // ---- Agente: DeepSeek por API en la nube, Gemini de respaldo, sandbox Docker ----------------------------
+  agents: {
+    defaults: {
+      workspace: "~/.openclaw/workspace",
+      model: {
+        primary: "deepseek/deepseek-v4-flash",
+        fallbacks: ["google/__MODELO_GEMINI__"],
+      },
+      // Fotos de piezas: DeepSeek Flash entiende imágenes; si no, Gemini.
+      imageModel: { primary: "deepseek/deepseek-flash", fallbacks: ["google/__MODELO_GEMINI__"] },
+      sandbox: {
+        mode: "all", // toda ejecución de archivos/comandos va a un contenedor sin red
+        backend: "docker",
+        scope: "agent",
+        workspaceAccess: "ro",
+      },
+    },
+  },
+
+  // ---- WhatsApp: sesión vinculada + lista blanca E.164 -----------------------------------------------------
+  channels: {
+    whatsapp: {
+      dmPolicy: "allowlist",
+      allowFrom: [__ALLOW_FROM__],
+      groupPolicy: "disabled",
+      mediaMaxMb: 20,
+      sendReadReceipts: true,
+      reactionLevel: "ack",
+      selfChatMode: false,
+    },
+  },
+
+  // ---- Servidor MCP propio (ítem 3.4): puente al agente LangGraph del repositorio --------------------------
+  mcp: {
+    servers: {
+      "taller-riopaila": {
+        command: "__UV__",
+        args: ["run", "--directory", "__REPO__", "python", "-m", "riopaila_qa.mcp_taller"],
+        env: { TALLER_API_URL: "http://127.0.0.1:8000" },
+        requestTimeoutMs: 150000,
+      },
+    },
+  },
+
+  // ---- Herramientas y permisos (lo mínimo: mensajería + nuestro MCP) ---------------------------------------
+  tools: {
+    profile: "messaging",
+    alsoAllow: ["bundle-mcp", "memory_search", "memory_get"],
+    deny: ["group:automation", "group:runtime", "group:fs", "sessions_spawn", "sessions_send", "browser", "canvas"],
+    fs: { workspaceOnly: true },
+    exec: { security: "deny", ask: "always" },
+    elevated: { enabled: false },
+    agentToAgent: { enabled: false },
+    sandbox: { tools: { alsoAllow: ["bundle-mcp", "memory_search", "memory_get"] } },
+    // Registrar novedades: solo los números del taller. A todos los demás se les quita esa herramienta.
+    toolsBySender: {
+      __STAFF_TOOLS__
+      "*": { deny: ["taller-riopaila__gestionar_novedad_taller"] },
+    },
+  },
+}

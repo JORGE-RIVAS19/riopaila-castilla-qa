@@ -1,0 +1,22 @@
+# /etc/systemd/system/riopaila-api.service · API del Asistente del Taller Castilla (FastAPI + LangGraph)
+# Solo escucha en 127.0.0.1: el único que le habla es el servidor MCP que lanza OpenClaw (y el túnel SSH de la web).
+[Unit]
+Description=Riopaila Castilla · API del agente del taller (TAAML M3)
+After=network-online.target ollama.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USUARIO__
+WorkingDirectory=__REPO__
+EnvironmentFile=__REPO__/.env
+ExecStart=__UV__ run --frozen uvicorn api.main:app --host 127.0.0.1 --port 8000 --workers 1
+Restart=always
+RestartSec=5
+# Endurecimiento básico
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
