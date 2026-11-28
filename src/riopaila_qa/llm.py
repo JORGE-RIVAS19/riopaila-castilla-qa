@@ -13,7 +13,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 
 from riopaila_qa.config import LLMSettings
 
-PROVIDERS = ("ollama", "gemini", "openai")
+PROVIDERS = ("ollama", "gemini", "openai", "deepseek")
 
 
 @dataclass(frozen=True)
@@ -40,6 +40,7 @@ def model_name(settings: LLMSettings, provider: str | None = None) -> str:
         "ollama": settings.ollama_model,
         "gemini": settings.gemini_model,
         "openai": settings.openai_model,
+        "deepseek": settings.deepseek_model,
     }[provider]
 
 
@@ -84,4 +85,23 @@ def get_chat_model(
         if not os.getenv("OPENAI_API_KEY"):
             raise RuntimeError("Falta OPENAI_API_KEY en el archivo .env")
         return ChatOpenAI(model=model, temperature=sampling.temperature, top_p=sampling.top_p)
+    if provider == "deepseek":
+        # Módulo 3: DeepSeek por API en la nube (compatible con OpenAI). La key va en DEEPSEEK_API_KEY.
+        from langchain_openai import ChatOpenAI
+
+        if not os.getenv("DEEPSEEK_API_KEY"):
+            raise RuntimeError("Falta DEEPSEEK_API_KEY en el archivo .env")
+        return ChatOpenAI(
+            model=model,
+            base_url=settings.deepseek_base_url,
+            api_key=os.environ["DEEPSEEK_API_KEY"],
+            temperature=sampling.temperature,
+            top_p=sampling.top_p,
+            max_tokens=2048,
+            timeout=60,
+            max_retries=2,
+            # Sin «thinking»: DeepSeek V4 exige reenviar reasoning_content en cada turno con herramientas si el
+            # razonamiento está activo; el arnés LangGraph no lo hace, así que se usa la ruta sin razonamiento.
+            extra_body=None if os.getenv("DEEPSEEK_THINKING", "0") == "1" else {"thinking": {"type": "disabled"}},
+        )
     raise ValueError(f"Proveedor no soportado: {provider}. Usa uno de {PROVIDERS}")
