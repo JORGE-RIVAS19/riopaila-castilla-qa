@@ -1,0 +1,1139 @@
+{
+  "fecha": "2026-11-28T00:32:07+00:00",
+  "k": 10,
+  "embeddings": "ollama:nomic-embed-text-v2-moe",
+  "indice": {
+    "disponible": true,
+    "alias": "riopaila_chunks",
+    "coleccion": "riopaila_chunks_ollama-nomic-embed-text-v2-moe_20261125005351025710",
+    "puntos": 636,
+    "dimensiones": 768,
+    "distancia": "Cosine",
+    "modo": "embebido (exacto)",
+    "colecciones": [
+      "riopaila_chunks_ollama-nomic-embed-text-v2-moe_20261125005351025710"
+    ]
+  },
+  "consultas": 28,
+  "modos": {
+    "densa": {
+      "recall@10": 0.9911,
+      "ndcg@10": 0.9339,
+      "mrr": 0.9405,
+      "hit@10": 1.0,
+      "latencia_media_ms": 633.3,
+      "detalle": [
+        {
+          "id": "R01",
+          "consulta": "¿En qué año nació la empresa y cómo ha sido su historia?",
+          "recall": 1.0,
+          "ndcg": 0.7977,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/nuestro-camino/",
+            "https://www.riopaila-castilla.com/energia/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-una-empresa-comprometida-con-colombia/"
+          ]
+        },
+        {
+          "id": "R02",
+          "consulta": "¿Qué tipos de azúcar comercializa la compañía?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/azucares/",
+            "https://www.riopaila-castilla.com/mitos-y-realidades-del-azucar/",
+            "https://www.riopaila-castilla.com/bagazo-de-la-cana-de-azucar-2/"
+          ]
+        },
+        {
+          "id": "R03",
+          "consulta": "¿Qué es el jarabe invertido y para qué productos se usa?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/jarabe-invertido/",
+            "https://www.riopaila-castilla.com/jarabe-invertido-el-ingrediente-que-da-sabor-a-los-helados-2/",
+            "https://www.riopaila-castilla.com/cana/"
+          ]
+        },
+        {
+          "id": "R04",
+          "consulta": "¿Qué es FertiRio y para qué sirve en los cultivos?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/acondicionador-fertirio/",
+            "https://www.riopaila-castilla.com/servicios-agricolas/",
+            "https://www.riopaila-castilla.com/innovacion-en-el-campo-estas-son-algunas-de-las-tecnologias-que-lideran-el-futuro-del-agro-colombiano/"
+          ]
+        },
+        {
+          "id": "R05",
+          "consulta": "¿Cómo genera energía renovable a partir del bagazo de caña?",
+          "recall": 1.0,
+          "ndcg": 0.8603,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/bagazo-de-la-cana-de-azucar-2/",
+            "https://www.riopaila-castilla.com/cana/",
+            "https://www.riopaila-castilla.com/energia/"
+          ]
+        },
+        {
+          "id": "R06",
+          "consulta": "¿En qué consiste el fondo concursable para iniciativas comunitarias?",
+          "recall": 1.0,
+          "ndcg": 0.511,
+          "mrr": 0.3333,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/proyectos-comunitarios-de-17-municipios-de-colombia-podran-acceder-a-fondo-concursable/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-presenta-fondo-concursable-para-iniciativas-sociales-y-comunitarias-del-valle-y-cauca/",
+            "https://www.riopaila-castilla.com/fondo-concursable-riopaila-castilla-mas/"
+          ]
+        },
+        {
+          "id": "R07",
+          "consulta": "¿Qué programa apoya el mantenimiento de vías terciarias rurales?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/caminos-rurales-un-programa-que-apoya-el-mantenimiento-de-vias-terciarias/",
+            "https://www.riopaila-castilla.com/caminos-rurales-3/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-apoyo-el-mantenimiento-de-78-kilometros-de-vias-rurales-en-valle-y-cauca/"
+          ]
+        },
+        {
+          "id": "R08",
+          "consulta": "¿Cuáles son los canales de contacto y la dirección de la oficina principal?",
+          "recall": 1.0,
+          "ndcg": 0.6309,
+          "mrr": 0.5,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/inversionistas/",
+            "https://www.riopaila-castilla.com/contactanos/",
+            "https://www.riopaila-castilla.com/aliados-productivos/"
+          ]
+        },
+        {
+          "id": "R09",
+          "consulta": "¿Qué órganos de gobierno tiene la sociedad?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/organos-de-gobierno/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/",
+            "https://www.riopaila-castilla.com/65-anos-de-compromiso-social-se-conmemoran-en-el-suroccidente-colombiano/"
+          ]
+        },
+        {
+          "id": "R10",
+          "consulta": "¿Qué establece el código de ética y buen gobierno?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/codigo-de-etica-y-buen-gobierno/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/",
+            "https://www.riopaila-castilla.com/organos-de-gobierno/"
+          ]
+        },
+        {
+          "id": "R11",
+          "consulta": "¿Cómo protege la empresa los datos personales de sus grupos de interés?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/politica-de-tratamiento-de-datos/",
+            "https://www.riopaila-castilla.com/politicas/",
+            "https://www.riopaila-castilla.com/codigo-de-etica-y-buen-gobierno/"
+          ]
+        },
+        {
+          "id": "R12",
+          "consulta": "¿Qué actividades de ganadería desarrolla el grupo?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/ganaderia/",
+            "https://www.riopaila-castilla.com/agricultura-regenerativa/",
+            "https://www.riopaila-castilla.com/"
+          ]
+        },
+        {
+          "id": "R13",
+          "consulta": "¿La compañía produce aceite de palma? ¿Dónde?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/palma-3/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/",
+            "https://www.riopaila-castilla.com/politica-de-tratamiento-de-datos/"
+          ]
+        },
+        {
+          "id": "R14",
+          "consulta": "¿Qué prácticas de agricultura regenerativa aplica?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/agricultura-regenerativa/",
+            "https://www.riopaila-castilla.com/practicas-ambientales-alineadas-con-los-ods/",
+            "https://www.riopaila-castilla.com/enfoque-asg/"
+          ]
+        },
+        {
+          "id": "R15",
+          "consulta": "¿Qué nivel obtuvo en la evaluación de sostenibilidad agrícola FSA?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/riopaila-castilla-alcanza-nivel-plata-en-el-farm-sustainability-assessment-fsa-convirtiendose-en-la-primera-empresa-del-sector-agroindustrial-de-la-cana-en-colombia-con-dicha-certificacion/",
+            "https://www.riopaila-castilla.com/fitch-ratings-elevo-calificacion-del-grupo-agroindustrial-riopaila-castilla-a-a-con-perspectiva-positiva/",
+            "https://www.riopaila-castilla.com/adhesiones-pactos-y-reconocimientos/"
+          ]
+        },
+        {
+          "id": "R16",
+          "consulta": "¿La empresa participa en el mercado de bonos de carbono?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/riopaila-castilla-incursiona-en-el-mercado-de-bonos-de-carbono/",
+            "https://www.riopaila-castilla.com/energia/",
+            "https://www.riopaila-castilla.com/40-pymes-del-suroccidente-colombiano-se-capacitan-en-sostenibilidad-y-gestion/"
+          ]
+        },
+        {
+          "id": "R17",
+          "consulta": "¿Qué calificación crediticia recibió de una agencia calificadora?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/fitch-ratings-elevo-calificacion-del-grupo-agroindustrial-riopaila-castilla-a-a-con-perspectiva-positiva/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/",
+            "https://www.riopaila-castilla.com/adhesiones-pactos-y-reconocimientos/"
+          ]
+        },
+        {
+          "id": "R18",
+          "consulta": "¿Cuántos litros de etanol se produjeron en el primer semestre de 2024?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/riopaila-castilla-produjo-cerca-de-17-millones-de-litros-de-etanol-en-el-primer-semestre/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-produjo-alcohol-carburante-para-movilizar-mas-de-270-mil-vehiculos/",
+            "https://www.riopaila-castilla.com/el-etanol-ha-ayudado-a-que-baje-el-precio-de-la-gasolina/"
+          ]
+        },
+        {
+          "id": "R19",
+          "consulta": "¿Qué donaciones de alcohol entregó durante la pandemia de COVID-19?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/seguimos-entregando-alcohol-a-comunidades-covid19/",
+            "https://www.riopaila-castilla.com/entregamos-20-mil-litros-de-alcohol-a-la-alcaldia-cali/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-hace-nueva-entrega-de-alcohol-a-la-alcaldia-de-santiago-de-cali-para-un-total-de-40-mil-litros-solo-a-esta-entidad-gubernamental/"
+          ]
+        },
+        {
+          "id": "R20",
+          "consulta": "¿En qué va el proyecto de azúcar orgánica de RioCas?",
+          "recall": 1.0,
+          "ndcg": 0.9675,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/avances-proyecto-azucar-organica-riocas/",
+            "https://www.riopaila-castilla.com/cana-organica-riopaila-castilla/",
+            "https://www.riopaila-castilla.com/riocas-dota-centros-hospitalarios/"
+          ]
+        },
+        {
+          "id": "R21",
+          "consulta": "¿Cómo impulsa el desarrollo de sus proveedores locales?",
+          "recall": 0.75,
+          "ndcg": 0.8319,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/empresa-azucarera-lanzo-estrategia-para-desarrollo-de-sus-proveedores-locales/",
+            "https://www.riopaila-castilla.com/la-apuesta-de-riopaila-castilla-por-el-desarrollo-de-sus-proveedores-locales/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-lanza-estrategia-para-relacionarse-con-proveedores-locales/"
+          ]
+        },
+        {
+          "id": "R22",
+          "consulta": "¿Qué significa el enfoque ambiental, social y de gobernanza de la compañía?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/enfoque-asg/",
+            "https://www.riopaila-castilla.com/sostenibilidad/",
+            "https://www.riopaila-castilla.com/politicas/"
+          ]
+        },
+        {
+          "id": "R23",
+          "consulta": "¿A qué pactos e iniciativas internacionales se ha adherido?",
+          "recall": 1.0,
+          "ndcg": 0.9197,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/adhesiones-pactos-y-reconocimientos/",
+            "https://www.riopaila-castilla.com/informes-de-sostenibilidad-y-gestion/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-hace-parte-de-la-comunidad-internacional-womens-empowermet-principles-de-las-naciones-unidas/"
+          ]
+        },
+        {
+          "id": "R24",
+          "consulta": "¿Qué mitos sobre el consumo de azúcar aclara la empresa?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/mitos-y-realidades-del-azucar/",
+            "https://www.riopaila-castilla.com/mitos-del-azucar/",
+            "https://www.riopaila-castilla.com/azucares/"
+          ]
+        },
+        {
+          "id": "R25",
+          "consulta": "¿Cómo funciona el sistema de tratamiento de aguas por aireación?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/sistema-de-aireacion-extendida/",
+            "https://www.riopaila-castilla.com/practicas-ambientales-alineadas-con-los-ods/",
+            "https://www.riopaila-castilla.com/palma-3/"
+          ]
+        },
+        {
+          "id": "R26",
+          "consulta": "¿Qué comunicó la empresa sobre el caso Policane?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/comunicado-a-la-opinion-publica-de-riopaila-castilla-sobre-caso-policane/",
+            "https://www.riopaila-castilla.com/comunicado-a-la-opinion-publica/",
+            "https://www.riopaila-castilla.com/comunicado-situacion-sukkar/"
+          ]
+        },
+        {
+          "id": "R27",
+          "consulta": "¿Qué resultados financieros reportó el grupo para el año 2023?",
+          "recall": 1.0,
+          "ndcg": 0.6309,
+          "mrr": 0.5,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/fitch-ratings-elevo-calificacion-del-grupo-agroindustrial-riopaila-castilla-a-a-con-perspectiva-positiva/",
+            "https://www.riopaila-castilla.com/el-grupo-riopaila-castilla-revela-cifras-en-un-ano-desafiante-para-el-sector-agroindustrial/",
+            "https://www.riopaila-castilla.com/con-un-crecimiento-del-27-en-sus-ingresos-operacionales-riopaila-castilla-cerro-el-2022/"
+          ]
+        },
+        {
+          "id": "R28",
+          "consulta": "¿Cómo respeta y promueve los derechos humanos?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/derechos-humanos/",
+            "https://www.riopaila-castilla.com/politicas/",
+            "https://www.riopaila-castilla.com/abastecimiento-responsable/"
+          ]
+        }
+      ]
+    },
+    "lexica": {
+      "recall@10": 0.8839,
+      "ndcg@10": 0.7617,
+      "mrr": 0.7351,
+      "hit@10": 0.8929,
+      "latencia_media_ms": 1.9,
+      "detalle": [
+        {
+          "id": "R01",
+          "consulta": "¿En qué año nació la empresa y cómo ha sido su historia?",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "mrr": 0.0,
+          "hit": 0.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/178-670-mwh-ano-de-energia-renovable-suministra-riopaila-castilla-al-pais/",
+            "https://www.riopaila-castilla.com/mensaje-presidente-para-grupos-de-interes-2-situacion-covid19/",
+            "https://www.riopaila-castilla.com/asi-finalizo-la-dulce-navidad-riocas-2019/"
+          ]
+        },
+        {
+          "id": "R02",
+          "consulta": "¿Qué tipos de azúcar comercializa la compañía?",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "mrr": 0.0,
+          "hit": 0.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/jarabe-invertido-el-ingrediente-que-da-sabor-a-los-helados-2/",
+            "https://www.riopaila-castilla.com/una-dulce-experiencia/",
+            "https://www.riopaila-castilla.com/sistema-de-aireacion-extendida/"
+          ]
+        },
+        {
+          "id": "R03",
+          "consulta": "¿Qué es el jarabe invertido y para qué productos se usa?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/jarabe-invertido-el-ingrediente-que-da-sabor-a-los-helados-2/",
+            "https://www.riopaila-castilla.com/jarabe-invertido/",
+            "https://www.riopaila-castilla.com/cana-organica-riopaila-castilla/"
+          ]
+        },
+        {
+          "id": "R04",
+          "consulta": "¿Qué es FertiRio y para qué sirve en los cultivos?",
+          "recall": 1.0,
+          "ndcg": 0.5,
+          "mrr": 0.3333,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/innovacion-en-el-campo-estas-son-algunas-de-las-tecnologias-que-lideran-el-futuro-del-agro-colombiano/",
+            "https://www.riopaila-castilla.com/servicios-agricolas/",
+            "https://www.riopaila-castilla.com/acondicionador-fertirio/"
+          ]
+        },
+        {
+          "id": "R05",
+          "consulta": "¿Cómo genera energía renovable a partir del bagazo de caña?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/bagazo-de-la-cana-de-azucar-2/",
+            "https://www.riopaila-castilla.com/178-670-mwh-ano-de-energia-renovable-suministra-riopaila-castilla-al-pais/",
+            "https://www.riopaila-castilla.com/energia/"
+          ]
+        },
+        {
+          "id": "R06",
+          "consulta": "¿En qué consiste el fondo concursable para iniciativas comunitarias?",
+          "recall": 1.0,
+          "ndcg": 0.4486,
+          "mrr": 0.25,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/riopaila-castilla-presenta-fondo-concursable-para-iniciativas-sociales-y-comunitarias-del-valle-y-cauca/",
+            "https://www.riopaila-castilla.com/proyectos-comunitarios-de-17-municipios-de-colombia-podran-acceder-a-fondo-concursable/",
+            "https://www.riopaila-castilla.com/fondo-concursable-riopaila-castilla-mas-entregara-capital-semilla-a-20-nuevas-iniciativas-comunitarias-del-suroccidente-colombiano/"
+          ]
+        },
+        {
+          "id": "R07",
+          "consulta": "¿Qué programa apoya el mantenimiento de vías terciarias rurales?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/caminos-rurales-un-programa-que-apoya-el-mantenimiento-de-vias-terciarias/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-apoyo-el-mantenimiento-de-78-kilometros-de-vias-rurales-en-valle-y-cauca/",
+            "https://www.riopaila-castilla.com/caminos-rurales-3/"
+          ]
+        },
+        {
+          "id": "R08",
+          "consulta": "¿Cuáles son los canales de contacto y la dirección de la oficina principal?",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "mrr": 0.0,
+          "hit": 0.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/aclaracion-sobre-los-procesos-de-seleccion-de-riopaila-castilla/",
+            "https://www.riopaila-castilla.com/inversionistas/",
+            "https://www.riopaila-castilla.com/informacion-para-proveedores-cierre-contable-y-fiscal-2023/"
+          ]
+        },
+        {
+          "id": "R09",
+          "consulta": "¿Qué órganos de gobierno tiene la sociedad?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/organos-de-gobierno/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/",
+            "https://www.riopaila-castilla.com/65-anos-de-compromiso-social-se-conmemoran-en-el-suroccidente-colombiano/"
+          ]
+        },
+        {
+          "id": "R10",
+          "consulta": "¿Qué establece el código de ética y buen gobierno?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/codigo-de-etica-y-buen-gobierno/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/",
+            "https://www.riopaila-castilla.com/proveedores-de-riopaila-castilla-tendran-acceso-a-financiacion-mas-economica-con-nueva-linea-de-bbva/"
+          ]
+        },
+        {
+          "id": "R11",
+          "consulta": "¿Cómo protege la empresa los datos personales de sus grupos de interés?",
+          "recall": 1.0,
+          "ndcg": 0.5,
+          "mrr": 0.3333,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/politicas/",
+            "https://www.riopaila-castilla.com/mensaje-presidente-para-grupos-de-interes-3-situacion-covid19/",
+            "https://www.riopaila-castilla.com/politica-de-tratamiento-de-datos/"
+          ]
+        },
+        {
+          "id": "R12",
+          "consulta": "¿Qué actividades de ganadería desarrolla el grupo?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/ganaderia/",
+            "https://www.riopaila-castilla.com/22-proyectos-sostenibles-con-beneficios-para-mas-de-23-mil-personas-apoyara-el-fondo-concursable-riopaila-castilla-mas/",
+            "https://www.riopaila-castilla.com/con-el-apoyo-a-mas-de-50-iniciativas-comunitarias-riopaila-castilla-le-aposto-al-desarrollo-territorial/"
+          ]
+        },
+        {
+          "id": "R13",
+          "consulta": "¿La compañía produce aceite de palma? ¿Dónde?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/palma-3/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-compromiso-con-el-desarrollo-en-un-valle-que-se-atreve/",
+            "https://www.riopaila-castilla.com/trabajar-la-tierra-con-respeto-para-hacerla-productiva-esta-es-la-estrategia-de-una-de-las-companias-mas-exitosas-en-el-valle-del-cauca/"
+          ]
+        },
+        {
+          "id": "R14",
+          "consulta": "¿Qué prácticas de agricultura regenerativa aplica?",
+          "recall": 1.0,
+          "ndcg": 0.6309,
+          "mrr": 0.5,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/servicios-agricolas/",
+            "https://www.riopaila-castilla.com/agricultura-regenerativa/",
+            "https://www.riopaila-castilla.com/acondicionador-fertirio/"
+          ]
+        },
+        {
+          "id": "R15",
+          "consulta": "¿Qué nivel obtuvo en la evaluación de sostenibilidad agrícola FSA?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/riopaila-castilla-alcanza-nivel-plata-en-el-farm-sustainability-assessment-fsa-convirtiendose-en-la-primera-empresa-del-sector-agroindustrial-de-la-cana-en-colombia-con-dicha-certificacion/",
+            "https://www.riopaila-castilla.com/avances-proyecto-azucar-organica-riocas/",
+            "https://www.riopaila-castilla.com/agricultura-regenerativa/"
+          ]
+        },
+        {
+          "id": "R16",
+          "consulta": "¿La empresa participa en el mercado de bonos de carbono?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/riopaila-castilla-incursiona-en-el-mercado-de-bonos-de-carbono/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-produjo-alcohol-carburante-para-movilizar-mas-de-270-mil-vehiculos/",
+            "https://www.riopaila-castilla.com/ganaderia/"
+          ]
+        },
+        {
+          "id": "R17",
+          "consulta": "¿Qué calificación crediticia recibió de una agencia calificadora?",
+          "recall": 1.0,
+          "ndcg": 0.6309,
+          "mrr": 0.5,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/informacion-para-proveedores-cierre-contable-y-fiscal-2023/",
+            "https://www.riopaila-castilla.com/fitch-ratings-elevo-calificacion-del-grupo-agroindustrial-riopaila-castilla-a-a-con-perspectiva-positiva/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/"
+          ]
+        },
+        {
+          "id": "R18",
+          "consulta": "¿Cuántos litros de etanol se produjeron en el primer semestre de 2024?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/riopaila-castilla-produjo-cerca-de-17-millones-de-litros-de-etanol-en-el-primer-semestre/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-107-anos-de-compromiso-por-colombia/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-produjo-alcohol-carburante-para-movilizar-mas-de-270-mil-vehiculos/"
+          ]
+        },
+        {
+          "id": "R19",
+          "consulta": "¿Qué donaciones de alcohol entregó durante la pandemia de COVID-19?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/entregamos-20-mil-litros-de-alcohol-a-la-alcaldia-cali/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-entrega-1000-litros-de-alcohol-al-meta/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-hace-nueva-entrega-de-alcohol-a-la-alcaldia-de-santiago-de-cali-para-un-total-de-40-mil-litros-solo-a-esta-entidad-gubernamental/"
+          ]
+        },
+        {
+          "id": "R20",
+          "consulta": "¿En qué va el proyecto de azúcar orgánica de RioCas?",
+          "recall": 1.0,
+          "ndcg": 0.8127,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/avances-proyecto-azucar-organica-riocas/",
+            "https://www.riopaila-castilla.com/riocas-dota-centros-hospitalarios/",
+            "https://www.riopaila-castilla.com/alcohol/"
+          ]
+        },
+        {
+          "id": "R21",
+          "consulta": "¿Cómo impulsa el desarrollo de sus proveedores locales?",
+          "recall": 0.75,
+          "ndcg": 0.8048,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/la-apuesta-de-riopaila-castilla-por-el-desarrollo-de-sus-proveedores-locales/",
+            "https://www.riopaila-castilla.com/empresa-azucarera-lanzo-estrategia-para-desarrollo-de-sus-proveedores-locales/",
+            "https://www.riopaila-castilla.com/inicio-prueba/"
+          ]
+        },
+        {
+          "id": "R22",
+          "consulta": "¿Qué significa el enfoque ambiental, social y de gobernanza de la compañía?",
+          "recall": 1.0,
+          "ndcg": 0.5,
+          "mrr": 0.3333,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/sostenibilidad/",
+            "https://www.riopaila-castilla.com/fondo-concursable-riopaila-castilla-mas/",
+            "https://www.riopaila-castilla.com/enfoque-asg/"
+          ]
+        },
+        {
+          "id": "R23",
+          "consulta": "¿A qué pactos e iniciativas internacionales se ha adherido?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/adhesiones-pactos-y-reconocimientos/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-hace-parte-de-la-comunidad-internacional-womens-empowermet-principles-de-las-naciones-unidas/",
+            "https://www.riopaila-castilla.com/informes-de-sostenibilidad-y-gestion/"
+          ]
+        },
+        {
+          "id": "R24",
+          "consulta": "¿Qué mitos sobre el consumo de azúcar aclara la empresa?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/mitos-del-azucar/",
+            "https://www.riopaila-castilla.com/mitos-y-realidades-del-azucar/",
+            "https://www.riopaila-castilla.com/azucares/"
+          ]
+        },
+        {
+          "id": "R25",
+          "consulta": "¿Cómo funciona el sistema de tratamiento de aguas por aireación?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/sistema-de-aireacion-extendida/",
+            "https://www.riopaila-castilla.com/practicas-ambientales-alineadas-con-los-ods/",
+            "https://www.riopaila-castilla.com/mitos-y-realidades-del-azucar/"
+          ]
+        },
+        {
+          "id": "R26",
+          "consulta": "¿Qué comunicó la empresa sobre el caso Policane?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/comunicado-a-la-opinion-publica-de-riopaila-castilla-sobre-caso-policane/",
+            "https://www.riopaila-castilla.com/comunicado-situacion-sukkar/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/"
+          ]
+        },
+        {
+          "id": "R27",
+          "consulta": "¿Qué resultados financieros reportó el grupo para el año 2023?",
+          "recall": 1.0,
+          "ndcg": 0.5,
+          "mrr": 0.3333,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/fitch-ratings-elevo-calificacion-del-grupo-agroindustrial-riopaila-castilla-a-a-con-perspectiva-positiva/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/",
+            "https://www.riopaila-castilla.com/el-grupo-riopaila-castilla-revela-cifras-en-un-ano-desafiante-para-el-sector-agroindustrial/"
+          ]
+        },
+        {
+          "id": "R28",
+          "consulta": "¿Cómo respeta y promueve los derechos humanos?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/derechos-humanos/",
+            "https://www.riopaila-castilla.com/politicas/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-rechaza-homicidio-de-uno-de-sus-trabajadores-en-pradera-valle/"
+          ]
+        }
+      ]
+    },
+    "hibrida": {
+      "recall@10": 0.9732,
+      "ndcg@10": 0.8539,
+      "mrr": 0.8274,
+      "hit@10": 1.0,
+      "latencia_media_ms": 322.6,
+      "detalle": [
+        {
+          "id": "R01",
+          "consulta": "¿En qué año nació la empresa y cómo ha sido su historia?",
+          "recall": 0.5,
+          "ndcg": 0.2372,
+          "mrr": 0.2,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/riopaila-castilla-107-anos-de-compromiso-por-colombia/",
+            "https://www.riopaila-castilla.com/el-grupo-riopaila-castilla-revela-cifras-en-un-ano-desafiante-para-el-sector-agroindustrial/",
+            "https://www.riopaila-castilla.com/codigo-de-etica-y-buen-gobierno/"
+          ]
+        },
+        {
+          "id": "R02",
+          "consulta": "¿Qué tipos de azúcar comercializa la compañía?",
+          "recall": 1.0,
+          "ndcg": 0.2891,
+          "mrr": 0.1,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/bagazo-de-la-cana-de-azucar-2/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/",
+            "https://www.riopaila-castilla.com/mitos-y-realidades-del-azucar/"
+          ]
+        },
+        {
+          "id": "R03",
+          "consulta": "¿Qué es el jarabe invertido y para qué productos se usa?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/jarabe-invertido/",
+            "https://www.riopaila-castilla.com/jarabe-invertido-el-ingrediente-que-da-sabor-a-los-helados-2/",
+            "https://www.riopaila-castilla.com/adhesiones-pactos-y-reconocimientos/"
+          ]
+        },
+        {
+          "id": "R04",
+          "consulta": "¿Qué es FertiRio y para qué sirve en los cultivos?",
+          "recall": 1.0,
+          "ndcg": 0.5,
+          "mrr": 0.3333,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/innovacion-en-el-campo-estas-son-algunas-de-las-tecnologias-que-lideran-el-futuro-del-agro-colombiano/",
+            "https://www.riopaila-castilla.com/servicios-agricolas/",
+            "https://www.riopaila-castilla.com/acondicionador-fertirio/"
+          ]
+        },
+        {
+          "id": "R05",
+          "consulta": "¿Cómo genera energía renovable a partir del bagazo de caña?",
+          "recall": 1.0,
+          "ndcg": 0.9469,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/bagazo-de-la-cana-de-azucar-2/",
+            "https://www.riopaila-castilla.com/energia/",
+            "https://www.riopaila-castilla.com/cana/"
+          ]
+        },
+        {
+          "id": "R06",
+          "consulta": "¿En qué consiste el fondo concursable para iniciativas comunitarias?",
+          "recall": 1.0,
+          "ndcg": 0.4556,
+          "mrr": 0.2,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/proyectos-comunitarios-de-17-municipios-de-colombia-podran-acceder-a-fondo-concursable/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-presenta-fondo-concursable-para-iniciativas-sociales-y-comunitarias-del-valle-y-cauca/",
+            "https://www.riopaila-castilla.com/fondo-concursable-riopaila-castilla-mas-entregara-capital-semilla-a-20-nuevas-iniciativas-comunitarias-del-suroccidente-colombiano/"
+          ]
+        },
+        {
+          "id": "R07",
+          "consulta": "¿Qué programa apoya el mantenimiento de vías terciarias rurales?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/caminos-rurales-un-programa-que-apoya-el-mantenimiento-de-vias-terciarias/",
+            "https://www.riopaila-castilla.com/caminos-rurales-3/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-apoyo-el-mantenimiento-de-78-kilometros-de-vias-rurales-en-valle-y-cauca/"
+          ]
+        },
+        {
+          "id": "R08",
+          "consulta": "¿Cuáles son los canales de contacto y la dirección de la oficina principal?",
+          "recall": 1.0,
+          "ndcg": 0.5,
+          "mrr": 0.3333,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/inversionistas/",
+            "https://www.riopaila-castilla.com/aclaracion-sobre-los-procesos-de-seleccion-de-riopaila-castilla/",
+            "https://www.riopaila-castilla.com/contactanos/"
+          ]
+        },
+        {
+          "id": "R09",
+          "consulta": "¿Qué órganos de gobierno tiene la sociedad?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/organos-de-gobierno/",
+            "https://www.riopaila-castilla.com/65-anos-de-compromiso-social-se-conmemoran-en-el-suroccidente-colombiano/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/"
+          ]
+        },
+        {
+          "id": "R10",
+          "consulta": "¿Qué establece el código de ética y buen gobierno?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/codigo-de-etica-y-buen-gobierno/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/",
+            "https://www.riopaila-castilla.com/organos-de-gobierno/"
+          ]
+        },
+        {
+          "id": "R11",
+          "consulta": "¿Cómo protege la empresa los datos personales de sus grupos de interés?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/politica-de-tratamiento-de-datos/",
+            "https://www.riopaila-castilla.com/politicas/",
+            "https://www.riopaila-castilla.com/mensaje-presidente-para-grupos-de-interes-3-situacion-covid19/"
+          ]
+        },
+        {
+          "id": "R12",
+          "consulta": "¿Qué actividades de ganadería desarrolla el grupo?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/ganaderia/",
+            "https://www.riopaila-castilla.com/el-grupo-riopaila-castilla-revela-cifras-en-un-ano-desafiante-para-el-sector-agroindustrial/",
+            "https://www.riopaila-castilla.com/con-el-apoyo-a-mas-de-50-iniciativas-comunitarias-riopaila-castilla-le-aposto-al-desarrollo-territorial/"
+          ]
+        },
+        {
+          "id": "R13",
+          "consulta": "¿La compañía produce aceite de palma? ¿Dónde?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/palma-3/",
+            "https://www.riopaila-castilla.com/politica-de-tratamiento-de-datos/",
+            "https://www.riopaila-castilla.com/trabajar-la-tierra-con-respeto-para-hacerla-productiva-esta-es-la-estrategia-de-una-de-las-companias-mas-exitosas-en-el-valle-del-cauca/"
+          ]
+        },
+        {
+          "id": "R14",
+          "consulta": "¿Qué prácticas de agricultura regenerativa aplica?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/agricultura-regenerativa/",
+            "https://www.riopaila-castilla.com/servicios-agricolas/",
+            "https://www.riopaila-castilla.com/enfoque-asg/"
+          ]
+        },
+        {
+          "id": "R15",
+          "consulta": "¿Qué nivel obtuvo en la evaluación de sostenibilidad agrícola FSA?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/riopaila-castilla-alcanza-nivel-plata-en-el-farm-sustainability-assessment-fsa-convirtiendose-en-la-primera-empresa-del-sector-agroindustrial-de-la-cana-en-colombia-con-dicha-certificacion/",
+            "https://www.riopaila-castilla.com/agricultura-regenerativa/",
+            "https://www.riopaila-castilla.com/avances-proyecto-azucar-organica-riocas/"
+          ]
+        },
+        {
+          "id": "R16",
+          "consulta": "¿La empresa participa en el mercado de bonos de carbono?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/riopaila-castilla-incursiona-en-el-mercado-de-bonos-de-carbono/",
+            "https://www.riopaila-castilla.com/energia/",
+            "https://www.riopaila-castilla.com/adhesiones-pactos-y-reconocimientos/"
+          ]
+        },
+        {
+          "id": "R17",
+          "consulta": "¿Qué calificación crediticia recibió de una agencia calificadora?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/fitch-ratings-elevo-calificacion-del-grupo-agroindustrial-riopaila-castilla-a-a-con-perspectiva-positiva/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/",
+            "https://www.riopaila-castilla.com/informacion-para-proveedores-cierre-contable-y-fiscal-2023/"
+          ]
+        },
+        {
+          "id": "R18",
+          "consulta": "¿Cuántos litros de etanol se produjeron en el primer semestre de 2024?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/riopaila-castilla-produjo-cerca-de-17-millones-de-litros-de-etanol-en-el-primer-semestre/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-produjo-alcohol-carburante-para-movilizar-mas-de-270-mil-vehiculos/",
+            "https://www.riopaila-castilla.com/el-etanol-ha-ayudado-a-que-baje-el-precio-de-la-gasolina/"
+          ]
+        },
+        {
+          "id": "R19",
+          "consulta": "¿Qué donaciones de alcohol entregó durante la pandemia de COVID-19?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/entregamos-20-mil-litros-de-alcohol-a-la-alcaldia-cali/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-entrega-1000-litros-de-alcohol-al-meta/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-hace-nueva-entrega-de-alcohol-a-la-alcaldia-de-santiago-de-cali-para-un-total-de-40-mil-litros-solo-a-esta-entidad-gubernamental/"
+          ]
+        },
+        {
+          "id": "R20",
+          "consulta": "¿En qué va el proyecto de azúcar orgánica de RioCas?",
+          "recall": 1.0,
+          "ndcg": 0.9675,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/avances-proyecto-azucar-organica-riocas/",
+            "https://www.riopaila-castilla.com/cana-organica-riopaila-castilla/",
+            "https://www.riopaila-castilla.com/riocas-dota-centros-hospitalarios/"
+          ]
+        },
+        {
+          "id": "R21",
+          "consulta": "¿Cómo impulsa el desarrollo de sus proveedores locales?",
+          "recall": 0.75,
+          "ndcg": 0.8319,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/empresa-azucarera-lanzo-estrategia-para-desarrollo-de-sus-proveedores-locales/",
+            "https://www.riopaila-castilla.com/la-apuesta-de-riopaila-castilla-por-el-desarrollo-de-sus-proveedores-locales/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-lanza-estrategia-para-relacionarse-con-proveedores-locales/"
+          ]
+        },
+        {
+          "id": "R22",
+          "consulta": "¿Qué significa el enfoque ambiental, social y de gobernanza de la compañía?",
+          "recall": 1.0,
+          "ndcg": 0.6309,
+          "mrr": 0.5,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/sostenibilidad/",
+            "https://www.riopaila-castilla.com/enfoque-asg/",
+            "https://www.riopaila-castilla.com/agricultura-regenerativa/"
+          ]
+        },
+        {
+          "id": "R23",
+          "consulta": "¿A qué pactos e iniciativas internacionales se ha adherido?",
+          "recall": 1.0,
+          "ndcg": 0.9197,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/adhesiones-pactos-y-reconocimientos/",
+            "https://www.riopaila-castilla.com/informes-de-sostenibilidad-y-gestion/",
+            "https://www.riopaila-castilla.com/riopaila-castilla-hace-parte-de-la-comunidad-internacional-womens-empowermet-principles-de-las-naciones-unidas/"
+          ]
+        },
+        {
+          "id": "R24",
+          "consulta": "¿Qué mitos sobre el consumo de azúcar aclara la empresa?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/mitos-del-azucar/",
+            "https://www.riopaila-castilla.com/mitos-y-realidades-del-azucar/",
+            "https://www.riopaila-castilla.com/azucares/"
+          ]
+        },
+        {
+          "id": "R25",
+          "consulta": "¿Cómo funciona el sistema de tratamiento de aguas por aireación?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/sistema-de-aireacion-extendida/",
+            "https://www.riopaila-castilla.com/practicas-ambientales-alineadas-con-los-ods/",
+            "https://www.riopaila-castilla.com/innovacion-en-el-campo-estas-son-algunas-de-las-tecnologias-que-lideran-el-futuro-del-agro-colombiano/"
+          ]
+        },
+        {
+          "id": "R26",
+          "consulta": "¿Qué comunicó la empresa sobre el caso Policane?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/comunicado-a-la-opinion-publica-de-riopaila-castilla-sobre-caso-policane/",
+            "https://www.riopaila-castilla.com/comunicado-situacion-sukkar/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/"
+          ]
+        },
+        {
+          "id": "R27",
+          "consulta": "¿Qué resultados financieros reportó el grupo para el año 2023?",
+          "recall": 1.0,
+          "ndcg": 0.6309,
+          "mrr": 0.5,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/fitch-ratings-elevo-calificacion-del-grupo-agroindustrial-riopaila-castilla-a-a-con-perspectiva-positiva/",
+            "https://www.riopaila-castilla.com/el-grupo-riopaila-castilla-revela-cifras-en-un-ano-desafiante-para-el-sector-agroindustrial/",
+            "https://www.riopaila-castilla.com/informacion-relevante-accionistas/"
+          ]
+        },
+        {
+          "id": "R28",
+          "consulta": "¿Cómo respeta y promueve los derechos humanos?",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "mrr": 1.0,
+          "hit": 1.0,
+          "top3": [
+            "https://www.riopaila-castilla.com/derechos-humanos/",
+            "https://www.riopaila-castilla.com/politicas/",
+            "https://www.riopaila-castilla.com/practicas-sostenibles-riocas/"
+          ]
+        }
+      ]
+    }
+  }
+}
