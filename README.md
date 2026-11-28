@@ -1,30 +1,174 @@
 <div align="center">
 
-# 🌾 Riopaila Castilla · Agente conversacional con memoria, RAG y router
+# 🔧 Asistente del Taller Castilla · Riopaila Castilla
 
-**Módulo 2 del asistente corporativo** · Técnicas Avanzadas de IA aplicadas en Modelos de Lenguaje (TAAML)
-Maestría en Inteligencia Artificial y Ciencias de Datos · Universidad Autónoma de Occidente · 2026-2S · **Grupo 3**
+**Agente de mantenimiento por WhatsApp** que integra el Módulo 1 (corpus), el Módulo 2 (agente con RAG, memoria y
+router) y el Módulo 3 (21 herramientas, OpenClaw y despliegue real) · Técnicas Avanzadas de IA aplicadas en Modelos de
+Lenguaje (TAAML) · Maestría en IA y Ciencias de Datos · Universidad Autónoma de Occidente · 2026-2S · **Grupo 3**
 
 ![CI](https://github.com/JORGE-RIVAS19/riopaila-castilla-qa/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)
 ![uv](https://img.shields.io/badge/entorno-uv-DE5FE9)
 ![LangGraph](https://img.shields.io/badge/LangGraph-create__agent-1C3C3C)
+![OpenClaw](https://img.shields.io/badge/gateway-OpenClaw-E34948)
+![WhatsApp](https://img.shields.io/badge/canal-WhatsApp-25D366?logo=whatsapp&logoColor=white)
+![DeepSeek](https://img.shields.io/badge/LLM-DeepSeek%20%2B%20Gemini-4D6BFE)
 ![Qdrant](https://img.shields.io/badge/vector%20DB-Qdrant-DC244C)
-![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)
-![React](https://img.shields.io/badge/frontend-React%2019-61DAFB?logo=react&logoColor=black)
 ![Licencia](https://img.shields.io/badge/licencia-MIT-green)
 
 </div>
 
 ## 📌 Problema
 
-Riopaila Castilla atiende públicos muy distintos (clientes de azúcar, mieles y alcohol; compradores de
-energía; proveedores y cultivadores de caña; comunidades; inversionistas). En el Módulo 1 construimos su
-base de conocimiento pública (173 documentos, 691 chunks) y un Q&A con citas. Faltaba un **asistente que
-converse**: que recuerde a quién atiende, que distinga cuándo buscar en documentos, cuándo consultar una
-cifra exacta y cuándo simplemente saludar, y que no se deje manipular por un documento contaminado.
+En el Taller Castilla (Planta Castilla de Riopaila Castilla) se mantienen cosechadoras de caña, tractores de cosecha
+(7 secciones × 6 tractores: Case IH Puma, John Deere 6165J y GAME 77ATX), alzadoras John Deere 2254 y 12 tractomulas
+Kenworth. El conocimiento para repararlos está disperso: **22 manuales en PDF** (5.217 páginas en español, inglés y
+portugués, varios escaneados), **SAP** (15.838 equipos, 26.580 materiales y 235.498 movimientos de consumo desde 2023) y
+la experiencia de los técnicos. Hoy un técnico en campo pierde tiempo buscando la página del manual, el fusible correcto
+o el código SAP de un repuesto, y el supervisor se entera tarde de los consumos fuera de lo normal.
 
 ## 💡 Solución
+
+Un **asistente por WhatsApp** (número real, lista blanca E.164) que contesta con evidencia:
+
+| Le preguntas… | Te responde con… |
+|---|---|
+| “¿Qué fusible es el del radio en la mula?” | 📸 la **foto de la caja de fusibles** con el fusible **resaltado** |
+| “¿Cómo cambio el filtro hidráulico del Puma 165?” | los pasos en español + 📘 **la página del manual** resaltada |
+| “¿Cuánto ha gastado la cosechadora 27316?” | cifras de SAP (calculadas en Python, nunca por el LLM) + 📈 **gráfica** |
+| “¿Hay consumos raros esta semana?” | ⚠️ **alertas explicables** (“30 en 30 días frente a ~2,5 esperados: 12×”) |
+| “¿Qué le toca cambiar pronto al 25375?” | 🔧 **kit sugerido** con fecha estimada, costo y confianza |
+| “¿Existe código SAP para la referencia 47715391?” | verificación en el maestro de materiales **antes** de pedir un código nuevo |
+| 📷 *foto de una pieza* | identificación visual + candidatos de código SAP (hipótesis, pide confirmar) |
+| “Mándame el informe de las cosechadoras” | 📄 **PDF** con resumen, gráfica, ranking y alertas |
+| “El 25375 está botando aceite, regístralo” | 📝 **pide confirmación (SÍ/NO)** y registra la novedad; solo el personal del taller |
+| 🎙️ *nota de voz* | OpenClaw la transcribe y el agente responde igual |
+
+Y todo lo del M2 sigue vivo: preguntas sobre Riopaila Castilla con RAG y citas, cifras públicas exactas, memoria del
+usuario y blindaje ante inyección. Cada mañana (6:00 a. m.) el **parte diario** llega solo por WhatsApp.
+
+## 🏗️ Arquitectura
+
+```mermaid
+flowchart LR
+  U([Técnicos, supervisor<br/>e invitados]) -- "mensaje · voz · foto" --> WA[WhatsApp]
+  WA -- "sesión vinculada<br/>allowlist E.164" --> OC["Gateway OpenClaw<br/>loopback + token · sandbox Docker<br/>SOUL/AGENTS/USER/MEMORY"]
+  OC -- "modelo del gateway" --> DS1[("DeepSeek API")]
+  OC -- "MCP stdio" --> MCP["MCP propio taller-riopaila<br/>consultar · novedad (HITL) · parte diario"]
+  MCP -- "POST /api/chat" --> API["FastAPI<br/>api/main.py"]
+  WEB["App React<br/>(torre de control)"] -- "REST + SSE" --> API
+  API --> R{"Router híbrido<br/>reglas → LLM si duda"}
+  R --> AG["Agente ReAct (create_agent)<br/>middleware: prompt dinámico, filtro de tools,<br/>resumen, verificador de cifras, respaldo"]
+  AG -- "LLM primario / respaldo" --> LLM[("DeepSeek V4 Flash<br/>Gemini (respaldo y visión)")]
+  AG <--> MEM[("SQLite<br/>checkpointer + Store")]
+  AG --> T["21 herramientas @tool + Pydantic"]
+  T --> DUCK[("DuckDB<br/>SAP: equipos, materiales, consumos")]
+  T --> Q[("Qdrant + BM25 (RRF)<br/>corpus público + manuales")]
+  T --> PDF[("22 manuales PDF<br/>render de la página")]
+  T --> NOV[("SQLite novedades")]
+  T -- "PNG · PDF" --> MED[("workspace/media")]
+  MED -- "MEDIA: adjunto" --> OC
+```
+
+**Doble router.** La puerta (OpenClaw + DeepSeek) contesta saludos sin gastar herramientas y delega todo lo del
+taller al MCP; adentro, el router del agente decide la ruta (`directo`, `memoria`, `rag`, `datos`, `mixto`, `taller`,
+`manual`, `novedad`) y **solo habilita las herramientas de esa ruta** (`TOOLS_BY_ROUTE`). Ver
+[ADR-007](docs/adr/ADR-007-openclaw-mcp-langgraph.md).
+
+### Las 21 herramientas (`@tool` + esquema Pydantic)
+
+| Grupo | Herramienta | Qué hace | Ruta |
+|---|---|---|---|
+| Flota | `buscar_equipo` · `ficha_equipo` · `flota_por_familia` · `ranking_gasto_equipos` | equipos por código o nombre, hoja de vida, flota activa por familia, top de gasto (+ gráfica) | taller |
+| Consumos | `historial_consumo` · `detalle_orden` · `donde_se_usa_material` · `grafica_gasto` | movimientos 261/262/101/102 por equipo u orden, dónde se usa un repuesto, gasto mensual (+ gráfica) | taller |
+| Repuestos | `buscar_repuesto` · `verificar_codigo_sap` · `repuestos_frecuentes` · `identificar_repuesto_por_foto` | búsqueda difusa (rapidfuzz), ¿la referencia ya tiene código?, lo que más se cambia por modelo, visión → SAP | taller / manual |
+| Inteligencia | `detectar_anomalias` · `predecir_reposicion` · `generar_informe_pdf` | consumo ≥3× su ritmo del año anterior, próximo cambio por intervalo mediano, informe PDF | taller |
+| Conocimiento | `buscar_manual` · `buscar_documentos` | página del manual con lo buscado **resaltado** (BM25 + glosario + Qdrant, RRF) · RAG del corpus público (M2) | manual · rag |
+| Datos públicos | `consultar_indicadores` · `comparar_cifras` | cifras públicas de Riopaila (M2) y aritmética en Python | datos · mixto · taller |
+| Memoria | `recordar_dato_usuario` | perfil de largo plazo en el Store (M2) | memoria · rag |
+| Acción (HITL) | `registrar_novedad` | `interrupt` → confirmación SÍ/NO → SQLite; solo supervisor/técnico | novedad |
+
+El servidor MCP propio (`src/riopaila_qa/mcp_taller/`) expone 3 herramientas a OpenClaw:
+`consultar_asistente_taller` (solo lectura), `gestionar_novedad_taller` (escritura, habilitada solo para los números del
+taller con `tools.toolsBySender`) y `parte_diario_taller`.
+
+## 🔒 Seguridad (defensa en capas)
+
+| Capa | Control |
+|---|---|
+| Canal | WhatsApp con `dmPolicy: allowlist` (E.164), grupos deshabilitados, número dedicado |
+| Gateway | `bind: loopback` + `auth.mode: token`; secretos en `~/.openclaw/.env` (fuera del repo) |
+| Herramientas | `tools.profile: messaging`, `tools.deny` (runtime, fs, automation, browser…), `fs.workspaceOnly`, `exec` denegado, sin `elevated` |
+| Sandbox | `agents.defaults.sandbox.mode: all` en Docker (sin red, solo lectura del workspace) |
+| Permisos por remitente | `toolsBySender`: solo los números del taller ven la herramienta de escritura |
+| Agente | rol decidido por el servidor (`TALLER_ROLES`), canal de solo lectura, **HITL** con `interrupt` antes de escribir |
+| Inyección | datos pasivos en XML + detector (M2); SOUL/AGENTS con *red lines*; el LLM no calcula (verificador de cifras) |
+| Datos | SAP y manuales **solo en el servidor**; el repo trae una **muestra anonimizada** (`data/taller/muestra`) |
+
+## 📏 Evaluación
+
+| Qué | Resultado | Cómo reproducir |
+|---|---|---|
+| Retrieval de manuales (25 consultas, relevancia por patrón) | léxica + glosario con RRF: **nDCG@10 0,580 · MRR 0,723 · hit@10 0,84** (vs. 0,561 / 0,687 sin glosario) | `uv run python scripts/eval_manuales.py` |
+| Proyección UMAP / t-SNE de 5.217 páginas | trustworthiness@10 0,98 / 0,99; pureza kNN@10 por idioma 0,99 > por manual 0,92 → el espacio léxico agrupa por **idioma** (justifica glosario + embeddings multilingües) | `uv run python scripts/proyeccion_embeddings.py --fuente qdrant` |
+| Retrieval del corpus público (M2, 28 consultas) | ver [retrieval_latest.md](docs/evaluacion/retrieval_latest.md) | `uv run python scripts/eval_retrieval.py` |
+| Pruebas | pytest sin red ni LLM real (muestra anonimizada, modelo simulado, HITL de punta a punta por MCP → API → grafo) | `uv run pytest` |
+
+![UMAP de los manuales](docs/evaluacion/proyeccion/umap_tfidf.png)
+
+## ⚙️ Instalación local (desarrollo)
+
+```bash
+uv sync                                                    # entorno reproducible (uv.lock)
+uv run python scripts/build_taller.py --muestra            # base del taller con la muestra anonimizada
+TALLER_DB=data/taller/muestra/taller_muestra.duckdb uv run fastapi dev api/main.py
+cd frontend && pnpm install --frozen-lockfile && pnpm dev  # torre de control web
+uv run pytest && uv run ruff check .
+```
+
+## 🚀 Despliegue (Google Cloud + OpenClaw + WhatsApp)
+
+Guía completa paso a paso: **[docs/DESPLIEGUE_M3.md](docs/DESPLIEGUE_M3.md)**. En resumen:
+
+```bash
+bash deploy/scripts/01_preparar_servidor.sh   # paquetes, Docker, Node 24, uv, Ollama (solo embeddings), repo
+bash deploy/scripts/02_cargar_datos.sh        # SAP → DuckDB, manuales + OCR, índices Qdrant
+bash deploy/scripts/03_configurar_openclaw.sh # OpenClaw, workspace, openclaw.json endurecido, API, WhatsApp, cron
+bash deploy/scripts/verificar.sh              # la prueba de 3 minutos del Anuncio 007
+```
+
+## 📁 Estructura
+
+```
+riopaila-castilla-qa/
+├── api/                      # FastAPI: chat (SSE), hilos, memoria, RAG, /api/taller/*, /media
+├── frontend/                 # React 19 + Vite + TS (torre de control web)
+├── src/riopaila_qa/
+│   ├── agent/                # router (8 rutas) · graph (create_agent + middleware) · service · tools · memory
+│   ├── taller/               # M3: base SAP (DuckDB) · consultas · manuales · gráficas/PDF · novedades · visión · tools
+│   ├── mcp_taller/           # M3: servidor MCP propio para OpenClaw
+│   ├── rag/                  # M2: Qdrant + BM25 (RRF) + blindaje
+│   ├── scraping/ corpus.py … # M1: pipeline Medallion
+├── prompts/                  # agente_v2_taller · vision_pieza_v1 · (M1/M2 versionados)
+├── deploy/                   # openclaw.json5, workspace (SOUL/AGENTS/USER/MEMORY/skill), systemd, scripts
+├── data/taller/muestra/      # muestra anonimizada (CSV) para pruebas y CI
+├── data/eval/                # consultas etiquetadas (corpus y manuales)
+├── scripts/                  # build_taller · preparar_manuales · index_manuales · eval_manuales · proyeccion_embeddings …
+├── tests/                    # pytest: taller, MCP, HITL, router, RAG, memoria, grafo y API
+└── docs/                     # despliegue, manual de uso, ADRs, evaluación, arquitectura (Archify)
+```
+
+## 📚 Documentación
+
+[Despliegue M3](docs/DESPLIEGUE_M3.md) · [Manual de uso](docs/MANUAL_USO_M3.md) · [ADRs](docs/adr/) ·
+[Arquitectura (Archify)](docs/arquitectura/) · [Evaluación](docs/evaluacion/) · [Informe M2](docs/INFORME_M2.md) ·
+[Informe M1](docs/INFORME.md) · [Uso de IA](docs/USO_DE_IA.md)
+
+---
+
+## 🧱 Lo que viene del Módulo 2
+
+### Capacidades heredadas del Módulo 2
 
 Un **agente conversacional** con frontend propio (React) desacoplado de un backend FastAPI que ejecuta un
 grafo **LangGraph**:
@@ -41,7 +185,8 @@ grafo **LangGraph**:
 | Observabilidad | LangSmith (`LANGSMITH_*`) + traza JSONL por turno en `logs/trazas.jsonl` | `agent/service.py` |
 | Interfaz | React 19 + Vite: streaming SSE, hilos, router visible, fuentes, errores, *time travel* | `frontend/` |
 
-## 🏗️ Arquitectura
+
+### Arquitectura del agente (Módulo 2)
 
 ```mermaid
 flowchart LR
@@ -59,7 +204,7 @@ flowchart LR
   M1["Corpus Gold del M1<br/>data/gold/chunks.jsonl"] -- "scripts/build_index.py<br/>(offline)" --> Q
 ```
 
-### Grafo del agente
+#### Grafo del agente
 
 ```mermaid
 flowchart TD
@@ -83,7 +228,7 @@ flowchart TD
 | `datos` | `consultar_indicadores`, `comparar_cifras` | «¿Cuánto vendió en energía al tercer trimestre de 2023?» |
 | `mixto` | las tres de datos y documentos | «Compara la meta de alcohol del documento con lo producido» |
 
-### Checkpointer vs. Store
+#### Checkpointer vs. Store
 
 ```mermaid
 flowchart LR
@@ -102,7 +247,8 @@ El **checkpointer** guarda el estado completo de cada hilo (mensajes, decisiones
 reanudarlo tras reiniciar el backend y hacer *time travel* (`/api/threads/{id}/checkpoints` y `/fork`).
 El **Store** guarda hechos del usuario que cruzan hilos: lo que se dice en el hilo A se recupera en el B.
 
-## 📏 Evaluación del retrieval
+
+### Evaluación del retrieval del corpus público (M2)
 
 28 consultas etiquetadas (`data/eval/retrieval_queries.jsonl`), relevancia binaria por documento,
 comparación **densa vs. léxica vs. híbrida** con recall@10, nDCG@10 y MRR:
@@ -115,40 +261,8 @@ Los resultados vigentes están en [`docs/evaluacion/retrieval_latest.md`](docs/e
 y se ven en la app (pestaña **Evaluación RAG**). Detalle de diseño y decisiones en
 [`docs/INFORME_M2.md`](docs/INFORME_M2.md).
 
-## ⚙️ Instalación
 
-Requisitos: [uv](https://docs.astral.sh/uv/), [Node.js 22 LTS](https://nodejs.org) con `pnpm`
-(`npm install -g pnpm`), [Ollama](https://ollama.com) para los embeddings y una API key de Gemini.
-
-```bash
-git clone https://github.com/JORGE-RIVAS19/riopaila-castilla-qa.git
-cd riopaila-castilla-qa
-uv sync                                   # backend: versiones exactas de uv.lock
-cp .env.example .env                      # Windows: copy .env.example .env  → poner GOOGLE_API_KEY
-ollama pull nomic-embed-text-v2-moe       # embeddings locales (768 dims)
-uv run python scripts/build_index.py      # indexación offline en Qdrant (data/qdrant)
-cd frontend && pnpm install && cd ..
-```
-
-## ▶️ Uso
-
-```bash
-# Terminal 1 · backend del agente (docs interactivas en http://127.0.0.1:8000/docs)
-uv run fastapi dev api/main.py
-
-# Terminal 2 · frontend propio (http://localhost:5173)
-cd frontend && pnpm dev
-
-# Utilidades
-uv run python scripts/eval_retrieval.py   # recall@10 / nDCG@10
-uv run python scripts/build_index.py --rollback   # blue/green: volver a la colección anterior
-uv run ruff check . && uv run pytest      # calidad backend (sin red ni LLM)
-cd frontend && pnpm test && pnpm build    # calidad frontend
-```
-
-El pipeline de scraping del Módulo 1 sigue disponible: `uv run python scripts/scrape_empresa.py`.
-
-## 🔌 API
+### API del Módulo 2
 
 | Método | Ruta | Para qué |
 |---|---|---|
@@ -163,51 +277,14 @@ El pipeline de scraping del Módulo 1 sigue disponible: `uv run python scripts/s
 | `POST` | `/api/rag/search` | Top-k denso, léxico o híbrido con filtros |
 | `GET` | `/api/eval/retrieval` · `/api/health` · `/api/graph` | Evaluación, estado y diagrama del grafo |
 
-## 📁 Estructura
-
-```
-riopaila-castilla-qa/
-├── api/                      # FastAPI: main.py (endpoints + SSE) · schemas.py (contratos Pydantic)
-├── frontend/                 # React 19 + Vite + TS: páginas, componentes, cliente SSE, Vitest
-├── src/riopaila_qa/
-│   ├── agent/                # settings · embeddings · memory · router · tools · graph · service · fakes
-│   ├── rag/                  # documents (limpieza) · index (Qdrant) · retriever (RRF) · shield
-│   ├── structured.py         # CSV de indicadores + consultas deterministas (Pydantic)
-│   ├── scraping/ corpus.py … # Módulo 1: pipeline Medallion y BM25
-├── prompts/agente_v1.md      # prompt de sistema del agente (versionado)
-├── data/
-│   ├── gold/                 # corpus del M1 (entrada del índice)
-│   ├── structured/           # indicadores_riopaila.csv (cifras públicas con URL de origen)
-│   ├── adversarial/          # documento sintético para el caso 5 (blindaje)
-│   ├── eval/                 # 24 preguntas del M1 + 28 consultas etiquetadas del retrieval
-│   ├── qdrant/ memory/       # índice y memoria locales (no se versionan)
-├── scripts/                  # build_index · eval_retrieval · scrape_empresa · run_eval
-├── tests/                    # pytest: datos, router, blindaje, RAG, memoria, grafo y API
-├── docs/                     # INFORME_M2 · GUION_M2 · ADRs · evaluación
-└── openspec/                 # especificaciones (SDD) del M1 y del M2
-```
-
-## 🔒 Ética, seguridad y datos
-
-- El corpus es solo contenido público (M1: robots.txt, sin sitemap de usuarios, Ley 1581).
-- El CSV usa **solo cifras publicadas por la empresa** en sus noticias, cada fila con su URL.
-- El documento de `data/adversarial/` es **sintético** y está marcado `origen=sintetico`: existe solo
-  para demostrar el blindaje; la app lo señala como “documento de prueba”.
-- `.env`, API keys, `data/qdrant/`, `data/memory/` y `logs/` nunca entran al repositorio.
-
-## 📚 Documentación
-
-[Informe M2](docs/INFORME_M2.md) · [Guion de la sustentación M2](docs/GUION_M2.md) ·
-[ADRs](docs/adr/) · [Evaluación del retrieval](docs/evaluacion/retrieval_latest.md) ·
-[Especificación M2](openspec/changes/modulo2-agente/proposal.md) · [Informe M1](docs/INFORME.md) ·
-[Uso de IA](docs/USO_DE_IA.md)
 
 ## 👥 Créditos
 
 - Melissa Palacios Domínguez
 - Waldor Drada Arango
-- Jorge Andrés Rivas Manzano
+- Jorge Andrés Rivas Manzano (Supervisor de Mantenimiento, Planta Castilla)
 
+Datos del taller usados con autorización de Riopaila Castilla; solo viven en el servidor del proyecto.
 Code Reviewer del Grupo 3: el profesor (revisión en vivo).
 
 ## 📄 Licencia
