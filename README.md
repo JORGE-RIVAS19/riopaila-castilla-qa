@@ -49,10 +49,19 @@ usuario y blindaje ante inyección. Cada mañana (6:00 a. m.) el **parte diario*
 
 ## 🏗️ Arquitectura
 
+**Diagrama Archify** (cada componente amarrado a archivos reales del repositorio en el commit `bbdcbf3`). La versión
+interactiva, con ruta, lente y zoom, es [`docs/arquitectura/arquitectura_m3.html`](docs/arquitectura/arquitectura_m3.html):
+descárgala (**Download raw file**) y ábrela en el navegador.
+
+![Arquitectura del Módulo 3 generada con Archify](docs/arquitectura/arquitectura_m3.png)
+
+<details>
+<summary>Vista rápida en Mermaid (se dibuja en GitHub)</summary>
+
 ```mermaid
 flowchart LR
   U([Técnicos, supervisor<br/>e invitados]) -- "mensaje · voz · foto" --> WA[WhatsApp]
-  WA -- "sesión vinculada<br/>allowlist E.164" --> OC["Gateway OpenClaw<br/>loopback + token · sandbox Docker<br/>SOUL/AGENTS/USER/MEMORY"]
+  WA -- "sesión vinculada<br/>allowlist E.164 + pairing" --> OC["Gateway OpenClaw<br/>loopback + token · sandbox Docker<br/>SOUL/AGENTS/USER/MEMORY"]
   OC -- "modelo del gateway" --> DS1[("DeepSeek API")]
   OC -- "MCP stdio" --> MCP["MCP propio taller-riopaila<br/>consultar · novedad (HITL) · parte diario"]
   MCP -- "POST /api/chat" --> API["FastAPI<br/>api/main.py"]
@@ -69,6 +78,8 @@ flowchart LR
   T -- "PNG · PDF" --> MED[("workspace/media")]
   MED -- "MEDIA: adjunto" --> OC
 ```
+
+</details>
 
 **Doble router.** La puerta (OpenClaw + DeepSeek) contesta saludos sin gastar herramientas y delega todo lo del
 taller al MCP; adentro, el router del agente decide la ruta (`directo`, `memoria`, `rag`, `datos`, `mixto`, `taller`,
