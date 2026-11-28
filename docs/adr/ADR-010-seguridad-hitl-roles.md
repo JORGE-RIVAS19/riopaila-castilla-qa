@@ -1,6 +1,6 @@
 # ADR-010 · Seguridad: roles del servidor, HITL con interrupt y OpenClaw endurecido
 
-- **Estado:** aceptada · 2026-11-23
+- **Estado:** aceptada · 2026-11-23 · el punto (1) lo reemplaza [ADR-012](ADR-012-whatsapp-abierto-lid.md) (consulta abierta)
 - **Contexto:** el bot lo prueban invitados desde sus teléfonos; los datos de SAP son internos; la única acción que
   escribe es registrar una novedad.
 - **Decisión:** (1) WhatsApp con `dmPolicy: allowlist`; (2) gateway `bind: loopback` + token; `tools.profile:

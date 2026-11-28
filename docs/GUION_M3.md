@@ -1,8 +1,8 @@
 # Guion de la sustentación final · Grupo 3 · sábado 28-nov · 8:45 a. m.
 
 **Formato:** 7 min de pitch con demo en vivo por WhatsApp (sin diapositivas) + 8 min de discusión técnica y preguntas.
-**Antes del sábado:** saludar desde el celular del bot a cada número que va a escribir (profesor, invitados; WhatsApp
-oculta el número del primer mensaje). **Antes de entrar (8:30):** `bash deploy/scripts/verificar.sh` en verde, celular del bot cargado, dos teléfonos de
+**Antes del sábado:** el bot le escribe una vez a cada número del taller (`openclaw message send …`) para que el servidor
+lo reconozca; los invitados no necesitan nada: cualquiera que escriba recibe respuesta (ADR-012). **Antes de entrar (8:30):** `bash deploy/scripts/verificar.sh` en verde, celular del bot cargado, dos teléfonos de
 invitados ya saludados **desde el celular del bot** (WhatsApp oculta el número de quien escribe por primera vez; si el bot escribe primero, el servidor lo reconoce), el repo en una pestaña y `openclaw logs --follow` en otra.
 
 ## Pitch (7 min)
@@ -45,7 +45,9 @@ invitados ya saludados **desde el celular del bot** (WhatsApp oculta el número 
 - **¿Qué pasa si un manual trae una instrucción maliciosa?** Datos pasivos en XML + detector de inyección + red lines en AGENTS.md.
 - **¿Datos reales en GitHub?** No: SAP y manuales solo en el servidor; el repo tiene una muestra anonimizada.
 - **¿Cómo saben que la búsqueda funciona?** 25 consultas etiquetadas: nDCG@10 0,58 / MRR 0,72 léxico; UMAP muestra que el espacio léxico agrupa por idioma, por eso el glosario y los embeddings multilingües.
-- **¿Cómo entra alguien nuevo, como el profesor?** El bot le escribe primero (WhatsApp revela el número solo si ya hay conversación) y, si no está en la lista blanca, recibe un código de *pairing* que el supervisor aprueba.
+- **¿Le funciona a cualquiera?** Sí: la consulta está abierta (`dmPolicy: open`). La lista E.164 decide lo sensible
+  (escribir, ver SAP real). Encontramos que el plugin descartaba en silencio a quien llega con el número oculto (LID) y lo
+  ajustamos con un script versionado y reversible: entra como visitante (ADR-012).
 - **¿Qué ve un invitado de otra empresa?** La vitrina pública de Riopaila y el taller sobre una **muestra
   anonimizada**; el perfil lo decide el servidor por el número, no el modelo (ADR-011). Un rol desconocido cae en la
   muestra: se falla hacia lo seguro.

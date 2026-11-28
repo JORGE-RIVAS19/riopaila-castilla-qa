@@ -30,13 +30,13 @@ Escríbele al número del bot por WhatsApp como le escribirías a un compañero 
 
 | Perfil | Quién | Ve | Puede |
 |---|---|---|---|
-| 🌎 Visitante | cualquier número aprobado | **Riopaila en cifras** (infografía y gráficas con fuente), documentos públicos, manuales y el taller con **datos de muestra anonimizados** | consultar |
+| 🌎 Visitante | cualquier número que escriba, también los de número oculto | **Riopaila en cifras** (infografía y gráficas con fuente), documentos públicos, manuales y el taller con **datos de muestra anonimizados** | consultar |
 | 🏢 Riopaila | jefes y otras áreas (`TALLER_ROLES=…=riopaila`) | además, **SAP real** | consultar |
 | 🔧 Técnico / supervisor | personal del taller (`TALLER_ROLES` y `toolsBySender`) | todo, con SAP real | además, registrar novedades con confirmación |
-| Número nuevo | — | recibe un código de *pairing*; el supervisor lo aprueba y queda como visitante | — |
 
-> **Primer contacto:** WhatsApp oculta el número de quien escribe por primera vez. Antes de que alguien nuevo use el
-> bot, escríbele “hola” **desde el celular del bot**; desde ese momento el servidor lo reconoce.
+> **Cualquiera puede escribir** (ADR-012). Para que el servidor reconozca a alguien del **taller** o de **Riopaila**, el
+> bot debe haberle escrito una vez: `openclaw message send --channel whatsapp --target +57… --message "Hola"`. Sin eso,
+> WhatsApp puede ocultarle su número al bot y esa persona entra como visitante.
 
 **Menú del visitante:** 1️⃣ *Riopaila en cifras* · 2️⃣ *Energía y etanol* · 3️⃣ *Cómo ayudo al taller* · 4️⃣ *Pregúntame
 por la empresa*. Basta con responder el número.

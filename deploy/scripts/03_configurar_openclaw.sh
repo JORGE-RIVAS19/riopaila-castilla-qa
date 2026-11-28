@@ -14,6 +14,8 @@ echo "==> OpenClaw $OPENCLAW_VERSION + plugins de WhatsApp y DeepSeek"
 npm install -g "openclaw@$OPENCLAW_VERSION" --allow-scripts=openclaw
 openclaw plugins install @openclaw/whatsapp
 openclaw plugins install @openclaw/deepseek-provider
+# Remitentes con número oculto (LID): sin este ajuste el plugin los descarta en silencio (ADR-012).
+bash "$REPO/deploy/scripts/05_parche_lid.sh" --sin-reiniciar || echo "AVISO: no se aplicó el ajuste LID; revisa deploy/scripts/05_parche_lid.sh"
 
 echo "==> Secretos en ~/.openclaw/.env (no se versiona)"
 mkdir -p "$HOME/.openclaw" && chmod 700 "$HOME/.openclaw"
