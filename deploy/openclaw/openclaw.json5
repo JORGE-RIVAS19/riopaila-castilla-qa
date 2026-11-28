@@ -32,13 +32,15 @@
     },
   },
 
-  // ---- WhatsApp: sesión vinculada + lista blanca E.164 + pairing ------------------------------------------
+  // ---- WhatsApp: sesión vinculada, consulta abierta y lista E.164 para lo sensible ------------------------
   channels: {
     whatsapp: {
-      // pairing: la lista blanca entra directo; un número nuevo recibe un código que el supervisor aprueba con
-      // `openclaw pairing approve whatsapp <CÓDIGO>`. Nadie fuera de la lista habla con el agente sin aprobación.
-      dmPolicy: "pairing",
-      allowFrom: [__ALLOW_FROM__],
+      // Consulta abierta (instrucción del docente: a cualquier invitado le debe funcionar). La lista E.164 no
+      // desaparece: decide quién escribe (toolsBySender, abajo) y quién ve SAP real (TALLER_ROLES en el API);
+      // cualquier otro número, o un remitente con número oculto (LID), entra como visitante. ADR-012.
+      // Para volver a cerrar: dmPolicy "pairing" y quitar "*" de allowFrom.
+      dmPolicy: "open",
+      allowFrom: ["*", __ALLOW_FROM__],
       groupPolicy: "disabled",
       mediaMaxMb: 20,
       sendReadReceipts: true,

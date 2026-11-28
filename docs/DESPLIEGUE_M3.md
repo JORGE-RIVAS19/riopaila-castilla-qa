@@ -12,7 +12,7 @@ con el modelo por **API en la nube**. Tiempo estimado: 60–90 minutos la primer
 | **API key de Gemini** | respaldo, visión de fotos y transcripción de notas de voz | aistudio.google.com |
 | **Celular con WhatsApp y un número dedicado** (SIM nueva o WhatsApp Business) | el número del bot; nunca el personal | — |
 | Los 3 Excel de SAP y los PDF de manuales | datos reales (solo viven en el servidor) | tu computador |
-| Números E.164 del taller (+57…) y de los invitados | lista blanca y permisos | — |
+| Números E.164 del taller (+57…) | permisos de escritura y datos reales (cualquiera puede consultar) | — |
 
 ## 1. Crear la máquina virtual
 
@@ -51,7 +51,7 @@ con OCR de los escaneados (≈2 min) y vectoriza corpus y manuales en Qdrant con
 ## 4. OpenClaw, WhatsApp y servicios
 
 ```bash
-cp deploy/numeros.env.example deploy/numeros.env && nano deploy/numeros.env   # lista blanca, taller, parte diario
+cp deploy/numeros.env.example deploy/numeros.env && nano deploy/numeros.env   # números del taller y parte diario
 bash deploy/scripts/03_configurar_openclaw.sh
 ```
 
@@ -59,7 +59,8 @@ El script instala OpenClaw (versión fija), los plugins de WhatsApp y DeepSeek, 
 `~/.openclaw/.env`, permisos 600), copia el workspace (SOUL, AGENTS, USER, MEMORY, bitácora y skill), genera
 `~/.openclaw/openclaw.json` desde la plantilla endurecida, levanta el API como servicio systemd, instala el gateway
 como servicio y muestra el **QR**: escanéalo desde el celular del bot en *WhatsApp → Dispositivos vinculados*.
-También construye la imagen del sandbox (`openclaw-sandbox:bookworm-slim`) y deja el gateway con `dmPolicy: "pairing"`.
+También construye la imagen del sandbox (`openclaw-sandbox:bookworm-slim`), aplica el ajuste para remitentes con número oculto
+(`05_parche_lid.sh`) y deja WhatsApp con consulta abierta y la lista E.164 para lo sensible (ADR-012).
 Al final programa el parte diario de las 6:00 a. m. y corre `openclaw security audit`.
 
 ## 5. Verificar (la prueba de 3 minutos)
@@ -95,7 +96,7 @@ solo lectura) por número; cualquier otro número es visitante y consulta el tal
 | Síntoma | Qué hacer |
 |---|---|
 | El bot no responde | `openclaw gateway status` · `openclaw channels status --probe` · `sudo systemctl status riopaila-api` |
-| Un número nuevo escribe y no hay respuesta; el log dice `WhatsApp inbound LID identity unavailable` | WhatsApp ocultó su número (LID). Desde el celular del bot escríbele “hola” a esa persona: el servidor aprende el par número↔LID y procesa los mensajes en cola. Si no está en la lista blanca, le llega un código: `openclaw pairing approve whatsapp <CÓDIGO>` |
+| Un número nuevo escribe y no hay respuesta; el log dice `WhatsApp inbound LID identity unavailable` | Falta el ajuste del plugin para números ocultos (se pierde al actualizarlo): `bash deploy/scripts/05_parche_lid.sh`. Si es alguien del taller, además el bot le escribe una vez: `openclaw message send --channel whatsapp --target +57… --message "Hola"` |
 | WhatsApp desvinculado | `openclaw channels login --channel whatsapp` y escanear de nuevo |
 | DeepSeek sin saldo / 429 | el agente cae solo a Gemini (`LLM_FALLBACK_PROVIDER`); en OpenClaw, `fallbacks` del modelo |
 | Qdrant ocupado al reindexar | `sudo systemctl stop riopaila-api` antes de `scripts/index_manuales.py` |

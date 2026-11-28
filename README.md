@@ -29,7 +29,7 @@ o el código SAP de un repuesto, y el supervisor se entera tarde de los consumos
 
 ## 💡 Solución
 
-Un **asistente por WhatsApp** (número real, lista blanca E.164) que contesta con evidencia:
+Un **asistente por WhatsApp** (número real, abierto a cualquier invitado; lista E.164 para lo sensible) que contesta con evidencia:
 
 | Le preguntas… | Te responde con… |
 |---|---|
@@ -61,7 +61,7 @@ descárgala (**Download raw file**) y ábrela en el navegador.
 ```mermaid
 flowchart LR
   U([Técnicos, supervisor<br/>e invitados]) -- "mensaje · voz · foto" --> WA[WhatsApp]
-  WA -- "sesión vinculada<br/>allowlist E.164 + pairing" --> OC["Gateway OpenClaw<br/>loopback + token · sandbox Docker<br/>SOUL/AGENTS/USER/MEMORY"]
+  WA -- "sesión vinculada<br/>consulta abierta · E.164 para escribir" --> OC["Gateway OpenClaw<br/>loopback + token · sandbox Docker<br/>SOUL/AGENTS/USER/MEMORY"]
   OC -- "modelo del gateway" --> DS1[("DeepSeek API")]
   OC -- "MCP stdio" --> MCP["MCP propio taller-riopaila<br/>consultar · novedad (HITL) · parte diario"]
   MCP -- "POST /api/chat" --> API["FastAPI<br/>api/main.py"]
@@ -106,7 +106,7 @@ El perfil lo decide el **servidor** por el número (`TALLER_ROLES`), nunca el us
 
 | Perfil | Quién | Ve | Escribe |
 |---|---|---|---|
-| 🌎 `invitado` | cualquier número aprobado (visitantes, otras empresas) | **vitrina de Riopaila** (infografía, gráficas y documentos públicos con cita) + el taller sobre la **muestra anonimizada** (el agente lo avisa) | no |
+| 🌎 `invitado` | cualquier número que escriba (visitantes, otras empresas, números ocultos) | **vitrina de Riopaila** (infografía, gráficas y documentos públicos con cita) + el taller sobre la **muestra anonimizada** (el agente lo avisa) | no |
 | 🏢 `riopaila` | jefes y otras áreas de la empresa | lo anterior + **SAP real** | no |
 | 🔧 `supervisor` · `tecnico` | personal del taller | todo, con SAP real | novedades con SÍ/NO |
 
@@ -122,7 +122,7 @@ taller con `tools.toolsBySender`) y `parte_diario_taller`.
 
 | Capa | Control |
 |---|---|
-| Canal | WhatsApp con lista blanca E.164 + `dmPolicy: pairing` (un número nuevo necesita aprobación), grupos deshabilitados, número dedicado |
+| Canal | WhatsApp con **consulta abierta** (`dmPolicy: open`, a cualquier invitado le responde) y **lista E.164 para lo sensible**: escribir y ver SAP real; remitentes con número oculto (LID) entran como visitantes ([ADR-012](docs/adr/ADR-012-whatsapp-abierto-lid.md)); grupos deshabilitados, número dedicado |
 | Gateway | `bind: loopback` + `auth.mode: token`; secretos en `~/.openclaw/.env` (fuera del repo) |
 | Herramientas | `tools.profile: messaging`, `tools.deny` (runtime, fs, automation, browser…), `fs.workspaceOnly`, `exec` denegado, sin `elevated` |
 | Sandbox | `agents.defaults.sandbox.mode: all` en Docker (sin red, solo lectura del workspace) |
