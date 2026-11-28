@@ -34,7 +34,8 @@ def _puerto_libre() -> int:
 @pytest.fixture(scope="session")
 def base_url(tmp_path_factory) -> str:
     if DESPLEGADO:
-        return os.environ["E2E_BASE_URL"].rstrip("/")
+        yield os.environ["E2E_BASE_URL"].rstrip("/")  # la fixture es un generador: hay que ceder el valor
+        return
     import uvicorn
 
     from api.main import _MEDIA, app
