@@ -2,8 +2,9 @@
 
 Dos modos:
 
-* **Local (por defecto, CI):** levanta el API en un puerto libre con el LLM guionado y la muestra anonimizada del
-  taller; sirve el frontend compilado (``frontend/dist``) desde el mismo origen.
+* **Local (por defecto, CI):** levanta el API en un puerto libre con el LLM guionado, el corpus público indexado con
+  embeddings simulados y la muestra anonimizada del taller; sirve el frontend compilado (``frontend/dist``) desde el
+  mismo origen.
 * **Desplegado:** ``E2E_BASE_URL=http://127.0.0.1:8000 uv run pytest tests/e2e`` en el servidor (o por el túnel
   SSH) corre las mismas pruebas contra la app real, con DeepSeek. Las aserciones que dependen del modelo guionado se
   relajan en este modo.
@@ -34,7 +35,8 @@ def _puerto_libre() -> int:
 @pytest.fixture(scope="session")
 def base_url(tmp_path_factory) -> str:
     if DESPLEGADO:
-        return os.environ["E2E_BASE_URL"].rstrip("/")
+        yield os.environ["E2E_BASE_URL"].rstrip("/")  # la fixture es un generador: hay que ceder el valor
+        return
     import uvicorn
 
     from api.main import _MEDIA, app
@@ -65,6 +67,15 @@ def base_url(tmp_path_factory) -> str:
         memory_dir=tmp / "m",
         trace_dir=tmp / "logs",
     )
+    # Corpus público del M1/M2 indexado con embeddings simulados: el flujo del pitch muestra citas reales.
+    from riopaila_qa.agent.embeddings import get_embeddings
+    from riopaila_qa.config import Paths
+    from riopaila_qa.rag import index as rag_index
+    from riopaila_qa.rag.documents import load_corpus_chunks
+
+    chunks, _ = load_corpus_chunks(Paths())
+    emb, dims, nombre = get_embeddings(s)
+    rag_index.build_index(chunks, emb, dims, nombre, s)
     app.state.agent_override = AgentService(s, fake_llm=True)
     puerto = _puerto_libre()
     server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=puerto, log_level="warning"))
@@ -81,6 +92,7 @@ def base_url(tmp_path_factory) -> str:
     server.should_exit = True
     hilo.join(timeout=10)
     app.state.agent_override = None
+    rag_index.close_clients()
     for k, v in previo.items():
         if v is None:
             os.environ.pop(k, None)

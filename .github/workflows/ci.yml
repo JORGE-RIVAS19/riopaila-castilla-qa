@@ -21,7 +21,7 @@ jobs:
       - name: Formato (Ruff)
         run: uv run ruff format --check .
       - name: Pruebas (pytest, sin red ni LLM)
-        run: uv run pytest
+        run: uv run pytest --ignore=tests/e2e
 
   frontend:
     name: Frontend · tipos + Vitest + build
@@ -42,3 +42,36 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm run build
+
+  e2e:
+    name: QA end-to-end · Playwright (API, webhook y web)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Dependencias del backend
+        run: uv sync --locked
+      - name: Compilar la web (el API la sirve en el mismo origen)
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile && pnpm run build
+      - name: Chromium de Playwright
+        run: uv run playwright install --with-deps chromium
+      - name: QA end-to-end (teléfono 390×844 y escritorio)
+        run: uv run pytest tests/e2e -v
+      - name: Capturas y trazas de la QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-playwright
+          path: tests/e2e/artifacts/
+          if-no-files-found: ignore

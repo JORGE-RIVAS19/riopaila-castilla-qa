@@ -5,6 +5,8 @@ const TOOL_LABEL: Record<string, string> = {
   consultar_indicadores: "📊 consultar_indicadores",
   comparar_cifras: "🧮 comparar_cifras",
   recordar_dato_usuario: "🧠 recordar_dato_usuario",
+  infografia_riopaila: "🖼️ infografia_riopaila",
+  grafica_indicador: "📈 grafica_indicador",
 };
 
 function ToolResult({ t }: { t: ToolRun }) {
