@@ -1,0 +1,648 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Asistente del Taller Castilla · arquitectura del Módulo 3",
+    "locale": "es",
+    "output": "docs/arquitectura/arquitectura_m3.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/JORGE-RIVAS19/riopaila-castilla-qa",
+      "provider": "github",
+      "revision": "bbdcbf355f59f0d2d08d7fd30d12f6e18994fc1c"
+    }
+  },
+  "components": [
+    {
+      "id": "usuarios",
+      "type": "external",
+      "label": "Técnicos e invitados",
+      "sublabel": "WhatsApp en su celular",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        140,
+        64
+      ],
+      "icon": "person",
+      "sources": [
+        {
+          "path": "deploy/openclaw/workspace/AGENTS.md",
+          "line": 3,
+          "end_line": 17,
+          "label": "cómo responde la puerta"
+        }
+      ]
+    },
+    {
+      "id": "whatsapp",
+      "type": "cloud",
+      "label": "WhatsApp",
+      "sublabel": "número dedicado",
+      "pos": [
+        335,
+        200
+      ],
+      "size": [
+        130,
+        64
+      ],
+      "sources": [
+        {
+          "path": "deploy/openclaw/openclaw.json5",
+          "line": 36,
+          "end_line": 45,
+          "label": "canal WhatsApp"
+        }
+      ]
+    },
+    {
+      "id": "openclaw",
+      "type": "security",
+      "label": "Gateway OpenClaw",
+      "sublabel": "loopback + token · sandbox",
+      "tag": "allowlist E.164",
+      "pos": [
+        590,
+        200
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "sources": [
+        {
+          "path": "deploy/openclaw/openclaw.json5",
+          "line": 6,
+          "end_line": 11,
+          "label": "gateway"
+        },
+        {
+          "path": "deploy/openclaw/openclaw.json5",
+          "line": 26,
+          "end_line": 31,
+          "label": "sandbox Docker"
+        },
+        {
+          "path": "deploy/openclaw/openclaw.json5",
+          "line": 61,
+          "end_line": 76,
+          "label": "tools y permisos"
+        }
+      ]
+    },
+    {
+      "id": "llm_gw",
+      "type": "cloud",
+      "label": "DeepSeek API",
+      "sublabel": "modelo del gateway",
+      "pos": [
+        600,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "deploy/openclaw/openclaw.json5",
+          "line": 19,
+          "end_line": 25,
+          "label": "modelo y respaldo"
+        }
+      ]
+    },
+    {
+      "id": "mcp",
+      "type": "backend",
+      "label": "MCP taller-riopaila",
+      "sublabel": "servidor MCP propio",
+      "pos": [
+        840,
+        200
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "sources": [
+        {
+          "path": "deploy/openclaw/openclaw.json5",
+          "line": 48,
+          "end_line": 58,
+          "label": "registro MCP"
+        },
+        {
+          "path": "src/riopaila_qa/mcp_taller/server.py",
+          "line": 61,
+          "end_line": 95,
+          "label": "puente al API"
+        },
+        {
+          "path": "src/riopaila_qa/mcp_taller/server.py",
+          "line": 98,
+          "end_line": 145,
+          "label": "3 herramientas"
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "FastAPI",
+      "sublabel": "api/main.py :8000",
+      "pos": [
+        1120,
+        200
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "api/main.py",
+          "line": 108,
+          "end_line": 129,
+          "label": "chat SSE y JSON"
+        },
+        {
+          "path": "api/main.py",
+          "line": 70,
+          "end_line": 73,
+          "label": "/media"
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "App React",
+      "sublabel": "torre de control",
+      "pos": [
+        1550,
+        200
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "frontend/src/api/client.ts",
+          "line": 97,
+          "end_line": 97,
+          "label": "chat/stream"
+        },
+        {
+          "path": "frontend/src/components/MediaGallery.tsx",
+          "line": 23,
+          "end_line": 48,
+          "label": "adjuntos"
+        }
+      ]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "Router híbrido",
+      "sublabel": "8 rutas · reglas → LLM",
+      "pos": [
+        1120,
+        360
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/riopaila_qa/agent/router.py",
+          "line": 38,
+          "end_line": 61,
+          "label": "TOOLS_BY_ROUTE"
+        },
+        {
+          "path": "src/riopaila_qa/agent/router.py",
+          "line": 152,
+          "end_line": 152,
+          "label": "reglas"
+        },
+        {
+          "path": "src/riopaila_qa/agent/router.py",
+          "line": 228,
+          "end_line": 228,
+          "label": "LLM si duda"
+        }
+      ]
+    },
+    {
+      "id": "agente",
+      "type": "backend",
+      "label": "Agente ReAct",
+      "sublabel": "create_agent + middleware",
+      "pos": [
+        1120,
+        520
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/riopaila_qa/agent/graph.py",
+          "line": 194,
+          "end_line": 199,
+          "label": "filtro de tools"
+        },
+        {
+          "path": "src/riopaila_qa/agent/graph.py",
+          "line": 225,
+          "end_line": 245,
+          "label": "create_agent"
+        },
+        {
+          "path": "src/riopaila_qa/agent/graph.py",
+          "line": 282,
+          "end_line": 282,
+          "label": "compile"
+        }
+      ]
+    },
+    {
+      "id": "llm_agente",
+      "type": "cloud",
+      "label": "LLM en la nube",
+      "sublabel": "DeepSeek · Gemini",
+      "pos": [
+        1550,
+        520
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/riopaila_qa/llm.py",
+          "line": 88,
+          "end_line": 107,
+          "label": "DeepSeek"
+        },
+        {
+          "path": "src/riopaila_qa/agent/graph.py",
+          "line": 240,
+          "end_line": 240,
+          "label": "respaldo"
+        }
+      ]
+    },
+    {
+      "id": "memoria",
+      "type": "database",
+      "label": "SQLite memoria",
+      "sublabel": "checkpointer + Store",
+      "pos": [
+        815,
+        520
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/riopaila_qa/agent/memory.py",
+          "line": 51,
+          "end_line": 68,
+          "label": "SqliteSaver y Store"
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "backend",
+      "label": "21 herramientas",
+      "sublabel": "@tool + Pydantic",
+      "pos": [
+        1120,
+        680
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/riopaila_qa/taller/tools.py",
+          "line": 164,
+          "end_line": 180,
+          "label": "17 del taller"
+        },
+        {
+          "path": "src/riopaila_qa/agent/service.py",
+          "line": 131,
+          "end_line": 160,
+          "label": "registro"
+        }
+      ]
+    },
+    {
+      "id": "media",
+      "type": "database",
+      "label": "workspace/media",
+      "sublabel": "PNG · PDF",
+      "pos": [
+        880,
+        680
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/riopaila_qa/taller/tools.py",
+          "line": 170,
+          "end_line": 176,
+          "label": "rutas y URL"
+        }
+      ]
+    },
+    {
+      "id": "duckdb",
+      "type": "database",
+      "label": "DuckDB SAP",
+      "sublabel": "solo lectura",
+      "pos": [
+        899,
+        840
+      ],
+      "size": [
+        130,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/riopaila_qa/taller/base.py",
+          "line": 157,
+          "end_line": 170,
+          "label": "consumo_neto"
+        },
+        {
+          "path": "src/riopaila_qa/taller/base.py",
+          "line": 209,
+          "end_line": 217,
+          "label": "conexión"
+        }
+      ]
+    },
+    {
+      "id": "qdrant",
+      "type": "database",
+      "label": "Qdrant + BM25",
+      "sublabel": "corpus + manuales",
+      "pos": [
+        1053,
+        840
+      ],
+      "size": [
+        130,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/riopaila_qa/taller/manuales.py",
+          "line": 545,
+          "end_line": 575,
+          "label": "búsqueda híbrida"
+        }
+      ]
+    },
+    {
+      "id": "manuales",
+      "type": "database",
+      "label": "22 manuales PDF",
+      "sublabel": "5.217 páginas",
+      "pos": [
+        1207,
+        840
+      ],
+      "size": [
+        130,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/riopaila_qa/taller/manuales.py",
+          "line": 637,
+          "end_line": 660,
+          "label": "foto de la página"
+        }
+      ]
+    },
+    {
+      "id": "novedades",
+      "type": "database",
+      "label": "SQLite novedades",
+      "sublabel": "fallas de campo",
+      "pos": [
+        1361,
+        840
+      ],
+      "size": [
+        130,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/riopaila_qa/taller/novedades.py",
+          "line": 49,
+          "end_line": 60,
+          "label": "INSERT"
+        },
+        {
+          "path": "src/riopaila_qa/taller/tools.py",
+          "line": 454,
+          "end_line": 500,
+          "label": "HITL"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VM Google Cloud · Ubuntu 24.04",
+      "wraps": [
+        "openclaw",
+        "mcp",
+        "api",
+        "router",
+        "agente",
+        "tools",
+        "memoria",
+        "media",
+        "duckdb",
+        "qdrant",
+        "manuales",
+        "novedades"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-usuario",
+      "from": "usuarios",
+      "to": "whatsapp",
+      "label": "mensaje · voz · foto",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-wa",
+      "from": "whatsapp",
+      "to": "openclaw",
+      "label": "sesión vinculada",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-gw-llm",
+      "from": "openclaw",
+      "to": "llm_gw",
+      "label": "modelo del gateway"
+    },
+    {
+      "id": "c-mcp",
+      "from": "openclaw",
+      "to": "mcp",
+      "label": "MCP stdio",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-api",
+      "from": "mcp",
+      "to": "api",
+      "label": "POST /api/chat",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-web",
+      "from": "web",
+      "to": "api",
+      "label": "REST + SSE"
+    },
+    {
+      "id": "c-router",
+      "from": "api",
+      "to": "router",
+      "label": "hilo wa-número",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-agente",
+      "from": "router",
+      "to": "agente",
+      "label": "ruta → tools",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-llm",
+      "from": "agente",
+      "to": "llm_agente",
+      "label": "primario y respaldo"
+    },
+    {
+      "id": "c-mem",
+      "from": "agente",
+      "to": "memoria",
+      "label": "checkpointer + Store"
+    },
+    {
+      "id": "c-tools",
+      "from": "agente",
+      "to": "tools",
+      "label": "@tool + Pydantic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-duck",
+      "from": "tools",
+      "to": "duckdb",
+      "label": "SQL"
+    },
+    {
+      "id": "c-qdrant",
+      "from": "tools",
+      "to": "qdrant",
+      "label": "RRF"
+    },
+    {
+      "id": "c-pdf",
+      "from": "tools",
+      "to": "manuales",
+      "label": "render"
+    },
+    {
+      "id": "c-nov",
+      "from": "tools",
+      "to": "novedades",
+      "label": "tras SÍ",
+      "variant": "security"
+    },
+    {
+      "id": "c-media",
+      "from": "tools",
+      "to": "media",
+      "label": "PNG · PDF"
+    },
+    {
+      "id": "c-envio",
+      "from": "media",
+      "to": "openclaw",
+      "label": "MEDIA: adjunto",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Datos reales (solo en el servidor)",
+      "items": [
+        "SAP: 15.838 equipos, 26.580 materiales, 235.498 movimientos",
+        "22 manuales: Case IH Puma, John Deere 6165J y 2254, GAME, Kenworth",
+        "Repo: muestra anonimizada para pruebas y CI"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Seguridad",
+      "items": [
+        "Allowlist E.164 y gateway en loopback con token",
+        "tools.deny, fs.workspaceOnly, sandbox Docker",
+        "toolsBySender + rol decidido por el servidor + HITL con interrupt"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Memoria",
+      "items": [
+        "Hilo por número en SqliteSaver (sobrevive al reinicio)",
+        "Perfil en SqliteStore; MEMORY.md y bitácora en el workspace"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Evaluación",
+      "items": [
+        "Manuales: nDCG@10 0,580 y MRR 0,723 (25 consultas)",
+        "UMAP y t-SNE: trustworthiness@10 ≥ 0,98"
+      ]
+    }
+  ]
+}
