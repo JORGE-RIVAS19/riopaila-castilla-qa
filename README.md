@@ -139,7 +139,7 @@ taller con `tools.toolsBySender`) y `parte_diario_taller`.
 | Proyección UMAP / t-SNE de 5.217 páginas | trustworthiness@10 0,98 / 0,99; pureza kNN@10 por idioma 0,99 > por manual 0,92 → el espacio léxico agrupa por **idioma** (justifica glosario + embeddings multilingües) | `uv run python scripts/proyeccion_embeddings.py --fuente qdrant` |
 | Retrieval del corpus público (M2, 28 consultas) | ver [retrieval_latest.md](docs/evaluacion/retrieval_latest.md) | `uv run python scripts/eval_retrieval.py` |
 | Pruebas | pytest sin red ni LLM real (muestra anonimizada, modelo simulado, HITL de punta a punta por MCP → API → grafo, perfiles visitante/riopaila/taller) | `uv run pytest` |
-| QA end-to-end con Playwright | API, webhook de WhatsApp (POST simulado → 200), flujo del pitch y la web en teléfono 390×844 y escritorio: consola limpia, sin 4xx/5xx, sin scroll horizontal | `uv run pytest tests/e2e` · en el servidor: `E2E_BASE_URL=http://127.0.0.1:8000 uv run pytest tests/e2e` |
+| [QA end-to-end con Playwright](docs/evaluacion/QA_PLAYWRIGHT.md) | **7/7 contra la app desplegada.** API, webhook de WhatsApp (POST simulado → 200), flujo del pitch con citas y tool ejecutada, y la web en teléfono 390×844 y escritorio: consola limpia, sin 4xx/5xx; corre en el CI en cada push | `uv run pytest tests/e2e` · en el servidor: `E2E_BASE_URL=http://127.0.0.1:8000 uv run pytest tests/e2e` |
 
 ![UMAP de los manuales](docs/evaluacion/proyeccion/umap_tfidf.png)
 

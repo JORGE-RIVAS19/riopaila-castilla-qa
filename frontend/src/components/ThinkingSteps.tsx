@@ -18,6 +18,8 @@ const TOOL_TEXT: Record<string, { icon: string; titulo: string }> = {
   consultar_indicadores: { icon: "📊", titulo: "Consultando el CSV de indicadores" },
   comparar_cifras: { icon: "🧮", titulo: "Calculando en Python" },
   recordar_dato_usuario: { icon: "🧠", titulo: "Guardando en tu memoria" },
+  infografia_riopaila: { icon: "🖼️", titulo: "Armando la infografía de Riopaila en cifras" },
+  grafica_indicador: { icon: "📈", titulo: "Graficando el indicador por año" },
 };
 
 const fmt = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 2 });

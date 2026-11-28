@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+# QA antes de cada push (anuncio 008). Activar una vez por clon:  git config core.hooksPath .githooks
+# Las pruebas de la web se saltan solas si no hay frontend compilado o Chromium de Playwright instalado.
+echo "QA con Playwright antes del push (tests/e2e)..."
+uv run pytest tests/e2e -q -p no:cacheprovider || {
+  echo "La QA falló: corrige antes de subir (o usa git push --no-verify si es una emergencia)."
+  exit 1
+}
