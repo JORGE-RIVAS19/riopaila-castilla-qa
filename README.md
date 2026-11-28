@@ -136,12 +136,14 @@ taller con `tools.toolsBySender`) y `parte_diario_taller`.
 | Qué | Resultado | Cómo reproducir |
 |---|---|---|
 | Retrieval de manuales (25 consultas, relevancia por patrón) | léxica + glosario con RRF: **nDCG@10 0,580 · MRR 0,723 · hit@10 0,84** (vs. 0,561 / 0,687 sin glosario) | `uv run python scripts/eval_manuales.py` |
-| Proyección UMAP / t-SNE de 5.217 páginas | trustworthiness@10 0,98 / 0,99; pureza kNN@10 por idioma 0,99 > por manual 0,92 → el espacio léxico agrupa por **idioma** (justifica glosario + embeddings multilingües) | `uv run python scripts/proyeccion_embeddings.py --fuente qdrant` |
+| Proyección UMAP / t-SNE (muestra estratificada de 1.526 de las 5.217 páginas) | **Embeddings reales (Qdrant):** trustworthiness@10 0,981 / 0,988; pureza kNN@10 por **familia de máquina 0,995**, por idioma 0,935, por manual 0,878. **Línea base léxica (TF-IDF):** por idioma 0,994 > por familia 0,979. → El espacio léxico agrupa por **idioma**; el denso, por **máquina** aunque el manual esté en otro idioma. Por eso la búsqueda es **híbrida** (RRF): lo denso cruza idiomas y lo léxico + glosario acierta códigos y referencias exactas | `uv run python scripts/proyeccion_embeddings.py --fuente qdrant` (en el servidor) |
 | Retrieval del corpus público (M2, 28 consultas) | ver [retrieval_latest.md](docs/evaluacion/retrieval_latest.md) | `uv run python scripts/eval_retrieval.py` |
 | Pruebas | pytest sin red ni LLM real (muestra anonimizada, modelo simulado, HITL de punta a punta por MCP → API → grafo, perfiles visitante/riopaila/taller) | `uv run pytest` |
 | [QA end-to-end con Playwright](docs/evaluacion/QA_PLAYWRIGHT.md) | **7/7 contra la app desplegada.** API, webhook de WhatsApp (POST simulado → 200), flujo del pitch con citas y tool ejecutada, y la web en teléfono 390×844 y escritorio: consola limpia, sin 4xx/5xx; corre en el CI en cada push | `uv run pytest tests/e2e` · en el servidor: `E2E_BASE_URL=http://127.0.0.1:8000 uv run pytest tests/e2e` |
 
-![UMAP de los manuales](docs/evaluacion/proyeccion/umap_tfidf.png)
+| Embeddings reales (Qdrant) | Línea base léxica (TF-IDF + LSA) |
+|---|---|
+| ![UMAP con embeddings reales](docs/evaluacion/proyeccion/umap_qdrant.png) | ![UMAP léxico](docs/evaluacion/proyeccion/umap_tfidf.png) |
 
 ## ⚙️ Instalación local (desarrollo)
 

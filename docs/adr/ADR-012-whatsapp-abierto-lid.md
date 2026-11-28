@@ -25,5 +25,9 @@
   número y el servidor lo reconozca; si no, entra como visitante. El ajuste toca código de terceros: hay que volver a
   aplicarlo tras actualizar el plugin (el script avisa si la línea cambió). `openclaw security audit` reporta la
   política abierta; es un riesgo aceptado y mitigado por perfiles, `toolsBySender`, HITL y sandbox.
+- **Aislamiento:** con la consulta abierta, la auditoría advirtió que varios remitentes podían compartir una sesión de la
+  puerta (`channels.dm.session_collision`); se fijó `session.dmScope: "per-account-channel-peer"` y la advertencia
+  desapareció. Resultado de `openclaw security audit`: 1 crítico (`dm.open`, riesgo aceptado por esta decisión) y 4
+  advertencias documentadas; *"No unguarded runtime/process tools"* y *"No unguarded runtime/filesystem contexts"*.
 - **Evidencia:** log del 27-nov, 21:01 (hora Colombia): `Inbound message 37976268636274@lid -> +573136538437` seguido
   de `Sent message … (313ms)`.

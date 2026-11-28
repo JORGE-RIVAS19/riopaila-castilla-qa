@@ -10,8 +10,9 @@
     auth: { mode: "token", token: "${OPENCLAW_GATEWAY_TOKEN}" },
   },
 
-  // Cada número de WhatsApp tiene su propia sesión (nadie ve la conversación de otro).
-  session: { dmScope: "per-channel-peer" },
+  // Cada remitente tiene su propia sesión, separada también por cuenta (nadie ve la conversación de otro). Con la
+  // consulta abierta, `openclaw security audit` pide este aislamiento (channels.dm.session_collision). ADR-012.
+  session: { dmScope: "per-account-channel-peer" },
 
   // ---- Agente: DeepSeek por API en la nube, Gemini de respaldo, sandbox Docker ----------------------------
   agents: {
